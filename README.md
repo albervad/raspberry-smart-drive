@@ -2,8 +2,7 @@
 
 Un gestor de archivos web ligero, moderno y rápido diseñado para Raspberry Pi. Permite subir archivos, organizarlos en carpetas y gestionar tu almacenamiento USB desde cualquier navegador en tu red local.
 
-![Screenshot](https://via.placeholder.com/800x400?text=Captura+de+Pantalla+Smart+Drive)
-*(Puedes subir una captura real de tu web aquí)*
+<img width="762" height="900" alt="image" src="https://github.com/user-attachments/assets/aab1d20c-208d-48ec-ba30-9b0a97cc2289" />
 
 ## ✨ Características
 
