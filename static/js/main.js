@@ -1,6 +1,6 @@
 /**
  * Raspberry Pi Smart Drive - Main Client Script
- * Versión: Bucle Secuencial Estricto (Corrección de subida múltiple)
+ * Versión: Bucle Secuencial Estricto + UI de Inbox Vacio Correcta
  */
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -24,7 +24,7 @@ if (form) {
         const fileInput = form.querySelector('input[type="file"]');
         if (fileInput.files.length === 0) return alert("Selecciona archivos");
 
-        // Convertimos a Array real para congelar la lista
+        // Convertimos a Array real
         const filesList = Array.from(fileInput.files);
         const totalFiles = filesList.length;
 
@@ -48,23 +48,16 @@ if (form) {
         const boton = form.querySelector('button');
         boton.disabled = true;
 
-        // --- BUCLE SECUENCIAL ESTRICTO ---
-        // Usamos un contador manual para asegurar el orden
+        // --- BUCLE SECUENCIAL ---
         for (let i = 0; i < totalFiles; i++) {
             const file = filesList[i];
-            
-            // Actualizamos texto GLOBAL para que veas qué pasa
             const statusText = document.getElementById('statusText');
             statusText.innerText = `[Archivo ${i + 1} de ${totalFiles}] Iniciando: ${file.name}`;
             document.getElementById('progressBar').style.width = "0%";
             
-            console.log(`>>> Procesando archivo ${i + 1}/${totalFiles}: ${file.name}`);
-
             try {
-                // 1. Subir este archivo y ESPERAR (await) a que termine
                 await uploadSingleFile(file);
                 
-                // 2. Pequeña pausa de seguridad (0.5s) para que la Raspberry cierre el fichero
                 statusText.innerText = `[Archivo ${i + 1} de ${totalFiles}] Guardado. Esperando...`;
                 await new Promise(r => setTimeout(r, 500));
                 
@@ -83,16 +76,14 @@ if (form) {
 
 /**
  * Sube un solo archivo trozo a trozo.
- * Devuelve una Promise que solo se resuelve cuando el servidor confirma el final.
  */
 async function uploadSingleFile(file) {
     const CHUNK_SIZE = 64 * 1024 * 1024; // 64MB
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
     
-    // 1. REANUDAR (Silencioso)
+    // 1. REANUDAR
     let offset = 0;
-    // Solo comprobamos si es > 50MB para ir rápido con los pequeños
     if (file.size > 50 * 1024 * 1024) { 
         try {
             const resCheck = await fetch(`/upload_status?filename=${encodeURIComponent(file.name)}`);
@@ -103,7 +94,7 @@ async function uploadSingleFile(file) {
         } catch (e) {}
     }
 
-    // 2. BUCLE DE TROZOS
+    // 2. SUBIR TROZOS
     while (offset < file.size) {
         const chunk = file.slice(offset, offset + CHUNK_SIZE);
         const formData = new FormData();
@@ -117,14 +108,12 @@ async function uploadSingleFile(file) {
             
             offset += chunk.size;
             
-            // Actualizar barra
             const percent = Math.min((offset / file.size) * 100, 99);
             progressBar.style.width = percent + "%";
             statusText.innerText = `Subiendo ${file.name}... ${Math.round(percent)}%`;
 
         } catch (err) {
             console.warn("Reintentando chunk...", err);
-            // Si falla, esperamos 2s y reintentamos el MISMO trozo (no sumamos offset)
             await new Promise(r => setTimeout(r, 2000));
         }
     }
@@ -134,7 +123,6 @@ async function uploadSingleFile(file) {
     await finalizarSubida(file.name);
 }
 
-// Función recursiva para renombrar si existe conflicto
 async function finalizarSubida(filename, action = 'check') {
     const formFinish = new FormData();
     formFinish.append("filename", filename);
@@ -142,29 +130,25 @@ async function finalizarSubida(filename, action = 'check') {
 
     const res = await fetch("/upload_finish", { method: "POST", body: formFinish });
 
-    // Si hay conflicto (409), renombramos automáticamente para no bloquear la cola
     if (res.status === 409) {
-        console.log(`Conflicto con ${filename}, renombrando automáticamente...`);
-        return finalizarSubida(filename, 'rename');
+        return finalizarSubida(filename, 'rename'); // Auto-rename en colas
     }
-    
     if (!res.ok) {
         const txt = await res.text();
         throw new Error("Fallo al finalizar: " + txt);
     }
-    
     return await res.json();
 }
 
 // ==========================================
-// 2. FUNCIONES AUXILIARES ÁRBOL (Idénticas)
+// 2. FUNCIONES AUXILIARES ÁRBOL (CORREGIDO)
 // ==========================================
 
 function initTreeCounts() {
     const folders = Array.from(document.querySelectorAll('.folder-node'));
     folders.reverse().forEach(folder => {
         let total = 0;
-        
+        // Buscamos tabla responsive O directa
         const table = folder.querySelector(':scope > div > .table-responsive > table') || 
                       folder.querySelector(':scope > div > table');
                       
@@ -214,7 +198,7 @@ function formatAndRenderFolders(selectElement, folders, suggestedFolder = null) 
     });
 }
 
-// Recargar árbol vía AJAX (para Drag & Drop)
+// Recargar árbol vía AJAX manteniendo estado abierto
 async function recargarArbol() {
     try {
         const openPaths = new Set();
@@ -223,24 +207,20 @@ async function recargarArbol() {
             if (path) openPaths.add(path);
         });
 
-        const res = await fetch('/');
-        const text = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
+        const res = await fetch('/tree-html'); // Usamos el endpoint fragmentado
+        if (!res.ok) throw new Error("Error fetching tree fragment");
         
-        const newTree = doc.getElementById('file-tree-root');
+        const html = await res.text();
         const currentTree = document.getElementById('file-tree-root');
         
-        if (newTree && currentTree) {
-            currentTree.replaceWith(newTree);
+        if (currentTree) {
+            currentTree.outerHTML = html; // Reemplazamos el div entero
             
+            // Restaurar estado abierto
             openPaths.forEach(path => {
                 const selector = `summary[data-folder="${CSS.escape(path)}"]`;
                 const summaryToOpen = document.getElementById('file-tree-root').querySelector(selector);
-                
-                if (summaryToOpen) {
-                    summaryToOpen.parentElement.open = true;
-                }
+                if (summaryToOpen) summaryToOpen.parentElement.open = true;
             });
             initTreeCounts();
         }
@@ -250,7 +230,7 @@ async function recargarArbol() {
 }
 
 // ==========================================
-// 3. MOVIMIENTOS, DROP Y BORRADO
+// 3. MOVIMIENTOS, DROP Y BORRADO (CORREGIDO INBOX VACIO)
 // ==========================================
 
 window.confirmarMover = async function() {
@@ -267,8 +247,9 @@ window.confirmarMover = async function() {
         const data = await res.json();
         if (res.ok && !data.error) { 
             dialog.close(); 
-            
             const row = document.querySelector(`tr[data-filepath="${CSS.escape(archivoActual)}"][data-zone="inbox"]`);
+            
+            // CORREGIDO: Usar helper para mostrar "Inbox vacío"
             eliminarFilaInbox(row);
             
             await recargarArbol();
@@ -283,6 +264,7 @@ window.handleDrop = async function(event) {
     if (!draggedItemPath) return;
     let destinationFolder = event.currentTarget.getAttribute('data-folder');
     if (!destinationFolder) destinationFolder = "."; 
+    
     try {
         const res = await fetch('/move', {
             method: 'POST',
@@ -293,6 +275,8 @@ window.handleDrop = async function(event) {
         if (res.ok && !data.error) {
             if (draggedItemZone === 'inbox') {
                 const row = document.querySelector(`tr[data-filepath="${CSS.escape(draggedItemPath)}"][data-zone="inbox"]`);
+                
+                // CORREGIDO: Usar helper
                 eliminarFilaInbox(row);
             }
             await recargarArbol();
@@ -309,11 +293,11 @@ async function ejecutarBorrado(zona, ruta) {
         if (res.ok) {
             if (zona === 'inbox') {
                 const row = document.querySelector(`tr[data-filepath="${CSS.escape(ruta)}"][data-zone="inbox"]`);
+                
+                // CORREGIDO: Usar helper
                 eliminarFilaInbox(row);
             } else { await recargarArbol(); }
-        } else { 
-            const data = await res.json(); alert("Error: " + data.detail); 
-        }
+        } else { const data = await res.json(); alert("Error: " + data.detail); }
     } catch (error) { alert("Error de conexión"); }
 }
 
@@ -322,15 +306,59 @@ window.allowDrop = function(e) { e.preventDefault(); e.currentTarget.classList.a
 window.handleDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); };
 document.addEventListener("dragend", function(e) { if(e.target) e.target.style.opacity = "1"; });
 
-window.crearCarpetaGlobal = async function() {
-    const parentPath = document.getElementById('parentFolderSelect').value;
-    const newFolderName = document.getElementById('newFolderName').value;
-    if (!newFolderName) return alert("Nombre vacío.");
-    const fullPath = parentPath === "." ? newFolderName : `${parentPath}/${newFolderName}`; 
-    const res = await fetch('/create-folder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: fullPath}) });
-    if (res.ok) { location.reload(); } else { alert("Error al crear."); }
+// NUEVAS FUNCIONES DE CARPETA
+let currentSelectedFolder = "."; 
+
+window.seleccionarCarpeta = function(event, path) {
+    document.querySelectorAll('.folder-summary.selected').forEach(el => el.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    currentSelectedFolder = path;
+    const label = document.getElementById('selected-folder-name');
+    if(label) label.innerText = path === "." ? "Raíz (/files/)" : path;
 };
 
+window.crearCarpetaMaestra = async function() {
+    const nombre = prompt("Nombre de la nueva carpeta (dentro de " + currentSelectedFolder + "):");
+    if (!nombre) return;
+    const fullPath = currentSelectedFolder === "." ? nombre : `${currentSelectedFolder}/${nombre}`;
+    try {
+        const res = await fetch('/create-folder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: fullPath}) });
+        if (res.ok) { 
+            await recargarArbol();
+            currentSelectedFolder = ".";
+            document.getElementById('selected-folder-name').innerText = "Raíz (/files/)";
+        } else { const d = await res.json(); alert("Error: " + d.error); }
+    } catch (e) { alert("Error de red"); }
+};
+
+window.borrarCarpeta = async function(path) {
+    if (!confirm(`¿Borrar carpeta vacía '${path}'?`)) return;
+    try {
+        const res = await fetch(`/delete-folder/${encodeURIComponent(path)}`, { method: 'DELETE' });
+        if (res.ok) {
+            await recargarArbol();
+            currentSelectedFolder = ".";
+            document.getElementById('selected-folder-name').innerText = "Raíz (/files/)";
+        } else { 
+            const d = await res.json(); alert("Error: " + d.detail); 
+        }
+    } catch (e) { alert("Error de red"); }
+};
+
+window.descargarZip = function(path) {
+    window.open(`/download-folder/${encodeURIComponent(path)}`, '_blank');
+};
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.folder-summary') && !e.target.closest('button')) {
+        document.querySelectorAll('.folder-summary.selected').forEach(el => el.classList.remove('selected'));
+        currentSelectedFolder = ".";
+        const label = document.getElementById('selected-folder-name');
+        if(label) label.innerText = "Raíz (/files/)";
+    }
+});
+
+// OTRAS
 window.crearCarpeta = async function() {
     const nombre = document.getElementById('newFolderInput').value;
     if (!nombre) return;
@@ -352,21 +380,9 @@ window.moverArchivo = async function(nombre) {
 // --- Helper para gestionar el vaciado del Inbox ---
 function eliminarFilaInbox(row) {
     if (!row) return;
-    
-    // Guardamos referencia al padre (tbody) antes de borrar la fila
     const tbody = row.parentElement;
-    
-    // Borramos la fila
     row.remove();
-
-    // Verificamos si nos hemos quedado sin filas
     if (tbody.children.length === 0) {
-        // Inyectamos el mensaje de "Inbox vacío"
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">
-                    Inbox vacío.
-                </td>
-            </tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">Inbox vacío.</td></tr>`;
     }
 }

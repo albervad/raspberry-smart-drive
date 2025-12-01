@@ -1,0 +1,55 @@
+{% macro render_carpeta(carpeta) %}
+<details class="folder-node">
+    <summary class="folder-summary drop-zone"
+             data-folder="{{ carpeta.ruta_relativa|default(carpeta.nombre) }}"
+             onclick="seleccionarCarpeta(event, '{{ carpeta.ruta_relativa|default(carpeta.nombre) }}')"
+             ondragover="allowDrop(event)" 
+             ondrop="handleDrop(event)" 
+             ondragleave="handleDragLeave(event)">
+        
+        <span class="folder-name-text">📁 {{ carpeta.nombre }}</span> 
+        
+        <div class="folder-actions" style="margin-left: auto; display: flex; gap: 5px; align-items: center;">
+            <span class="file-count" style="color: var(--text-muted); font-size: 0.85em; margin-right: 5px;">(...)</span>
+            
+            <button class="btn-small btn-secondary btn-icon-only" title="Descargar ZIP"
+                    onclick="event.stopPropagation(); descargarZip('{{ carpeta.ruta_relativa|default(carpeta.nombre) }}')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            </button>
+
+            {% if carpeta.ruta_relativa %}
+            <button class="btn-small btn-danger btn-icon-only" title="Borrar Carpeta"
+                    onclick="event.stopPropagation(); borrarCarpeta('{{ carpeta.ruta_relativa }}')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+            {% endif %}
+        </div>
+    </summary>
+    
+    <div style="padding-left: 10px;">
+        {% for sub in carpeta.subcarpetas %} {{ render_carpeta(sub) }} {% endfor %}
+        {% if carpeta.archivos %}
+        <div class="table-responsive">
+            <table style="margin-bottom: 15px;">
+                {% for archivo in carpeta.archivos %}
+                <tr draggable="true" class="draggable-file" data-filepath="{{ archivo.url_descarga }}" data-zone="catalog" ondragstart="handleDragStart(event)">
+                    <td style="width: 50%; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📄 {{ archivo.nombre }}</td>
+                    <td style="color: var(--text-muted); text-align: right;">{{ archivo.tamano }}</td>
+                    <td style="text-align: right;">
+                        <div class="table-actions">
+                            <a href="/data/files/{{ archivo.url_descarga }}" target="_blank" class="btn-action btn-small btn-secondary btn-icon-only"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></a>
+                            <button class="btn-small btn-danger btn-icon-only" onclick="borrarCatalogado('{{ archivo.url_descarga }}')"><svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</details>
+{% endmacro %}
+
+<div id="file-tree-root" class="section-box">
+    {% for carpeta in arbol_archivos %} {{ render_carpeta(carpeta) }} {% else %} <p style="text-align: center; color: var(--text-muted);">No hay carpetas catalogadas.</p> {% endfor %}
+</div>

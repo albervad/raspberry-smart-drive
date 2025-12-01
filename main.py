@@ -3,9 +3,10 @@ import os
 import asyncio
 from contextlib import asynccontextmanager
 from urllib.parse import quote, unquote
-from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse 
 from pydantic import BaseModel
 from natsort import natsorted
 
@@ -388,3 +389,64 @@ async def move_file(data: MoveSchema):
 
     except Exception as e:
         return {"error": f"Error al mover: {str(e)}"}
+
+# ==========================================
+# GESTIÓN AVANZADA DE CARPETAS (ZIP & BORRAR)
+# ==========================================
+
+# 1. BORRAR CARPETA VACÍA
+@app.delete("/delete-folder/{path:path}")
+def delete_folder(path: str):
+    try:
+        clean_path = unquote(path)
+        full_path = sanitizar_ruta_entrada(clean_path, FILES_DIR)
+        
+        # Seguridad: No borrar la raíz
+        if full_path == FILES_DIR:
+             raise HTTPException(status_code=403, detail="No se puede borrar la raíz")
+
+        if os.path.exists(full_path) and os.path.isdir(full_path):
+            try:
+                # CAMBIO: os.rmdir solo funciona si la carpeta está vacía
+                os.rmdir(full_path) 
+                return {"info": "Carpeta eliminada"}
+            except OSError:
+                # Si salta error, es que tiene cosas dentro
+                raise HTTPException(status_code=409, detail="La carpeta NO está vacía.")
+        
+        raise HTTPException(status_code=404, detail="Carpeta no encontrada")
+    except Exception as e:
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+# 2. DESCARGAR CARPETA COMO ZIP
+def remove_file(path: str):
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+
+@app.get("/download-folder/{path:path}")
+def download_folder_zip(path: str, background_tasks: BackgroundTasks):
+    try:
+        clean_path = unquote(path)
+        full_path = sanitizar_ruta_entrada(clean_path, FILES_DIR)
+        folder_name = os.path.basename(full_path)
+        
+        if not os.path.isdir(full_path):
+            raise HTTPException(status_code=404, detail="Carpeta no encontrada")
+
+        # Zip temporal en /tmp
+        zip_filename = f"{folder_name}.zip"
+        zip_path = os.path.join("/tmp", zip_filename)
+        
+        # Crear ZIP (shutil lo hace nativo)
+        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', full_path)
+        
+        # Programar borrado automático al terminar
+        background_tasks.add_task(remove_file, zip_path)
+        
+        return FileResponse(zip_path, media_type='application/zip', filename=zip_filename)
+    except Exception as e:
+        print(f"Error ZIP: {e}")
+        raise HTTPException(status_code=500, detail="Error creando ZIP")
