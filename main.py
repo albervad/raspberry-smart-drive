@@ -1,105 +1,128 @@
 import shutil
 import os
+import asyncio
+from contextlib import asynccontextmanager
+from urllib.parse import quote, unquote
 from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import List
-from natsort import natsorted
 from pydantic import BaseModel
-from urllib.parse import quote
-import asyncio
+from natsort import natsorted
 
-# 1. Creamos una instancia de FastAPI
-app = FastAPI()
-app.mount("/data", StaticFiles(directory="/mnt/midrive"), name="datos")
+# ==========================================
+# 1. CONFIGURACIÓN Y CONSTANTES GLOBALES
+# ==========================================
+BASE_MOUNT = "/mnt/midrive"
+INBOX_DIR = os.path.join(BASE_MOUNT, "inbox")
+FILES_DIR = os.path.join(BASE_MOUNT, "files")
+
+# ==========================================
+# 2. GESTIÓN DEL ARRANQUE (LIFESPAN)
+# ==========================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Se ejecuta al iniciar el servidor.
+    Crea las carpetas necesarias y verifica permisos.
+    """
+    carpetas = [INBOX_DIR, FILES_DIR]
+    print(f"--> Iniciando Smart Drive. Verificando rutas...")
+    
+    for folder in carpetas:
+        if not os.path.exists(folder):
+            try:
+                os.makedirs(folder, exist_ok=True)
+                print(f"    [OK] Creada carpeta: {folder}")
+            except PermissionError:
+                print(f"    [ERROR] Sin permisos para crear: {folder}")
+        else:
+            print(f"    [OK] Detectada: {folder}")
+            
+    yield
+    print("--> Apagando Smart Drive...")
+
+# ==========================================
+# 3. INICIALIZACIÓN DE LA APP
+# ==========================================
+app = FastAPI(lifespan=lifespan)
+
+# Montaje de archivos estáticos y plantillas
+# Nota: Si el disco no está montado, /data podría fallar, pero el servidor arrancará.
+if os.path.exists(BASE_MOUNT):
+    app.mount("/data", StaticFiles(directory=BASE_MOUNT), name="datos")
+
+# Importante: Montar la carpeta static local para el JS/CSS
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 2. Configuramos la carpeta de plantillas
 templates = Jinja2Templates(directory="templates")
 
-# 3. Definimos una ruta que renderiza una plantilla HTML
-@app.get("/")
-def home(request: Request):
-    
-    # Obtenemos el uso del disco en la ruta /mnt/midrive
-    gb_total, gb_free, porcentaje_uso = obtenerUsoDisco()
 
-    #Mostramos los archivos en el directorio /mnt/midrive/inbox
-    lista_archivos_inbox = archivosInbox()
+# ==========================================
+# 4. FUNCIONES AUXILIARES (HELPERS)
+# ==========================================
 
-    #Mostramos los archivos en el directorio /mnt/midrive/files
-    carpeta_files = "/mnt/midrive/files"
-    arbol_completo_files = obtener_arbol_directorios(carpeta_files)
-
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "espacio_total": gb_total,
-        "espacio_libre": gb_free,
-        "porcentaje": porcentaje_uso,
-        "archivos_inbox": lista_archivos_inbox,
-        "arbol_archivos": arbol_completo_files["subcarpetas"]
-    })
-
-# --- FUNCIÓN DE SEGURIDAD PARA PREVENIR PATH TRAVERSAL ---
-def sanitizar_ruta_entrada(user_input: str, base_dir: str):
-    """
-    Verifica que la entrada del usuario no intente salir de la ruta base.
-    Lanza HTTPException si se detecta un ataque.
-    """
+def sanitizar_ruta_entrada(user_input: str, base_dir: str) -> str:
+    """Evita ataques de Path Traversal asegurando que la ruta esté dentro del base_dir."""
     if not user_input:
-        return ""
+        return base_dir # Si es vacío, devolvemos la base (ej: raíz)
 
-    # 1. Combina la ruta base con la entrada del usuario
+    # Combinar y resolver ruta absoluta
     requested_path = os.path.join(base_dir, user_input)
-    
-    # 2. Resuelve la ruta real (limpia los ../ y enlaces simbólicos)
     safe_path = os.path.realpath(requested_path)
     
-    # 3. VERIFICACIÓN CRÍTICA: La ruta final debe comenzar con la ruta base.
-    # Esto asegura que el atacante no ha escapado de BASE_DIR.
-    if not safe_path.startswith(base_dir):
+    # Verificar que seguimos dentro de la jaula
+    if not safe_path.startswith(os.path.realpath(base_dir)):
         raise HTTPException(
             status_code=403, 
-            detail="Forbidden: Path Traversal detectado y bloqueado."
+            detail=f"Forbidden: Acceso denegado a {user_input}"
         )
-    
-    # Devolvemos el segmento final limpio
     return safe_path
 
-def obtenTamaño(size):
+def formatear_tamano(size: int) -> str:
+    """Convierte bytes a formato legible (KB, MB, GB)."""
     for unidad in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
             return f"{size:.2f} {unidad}"
         size /= 1024
     return f"{size:.2f} PB"
 
-def obtenerUsoDisco():
-    total, used, free = shutil.disk_usage("/mnt/midrive")
-    gb_total = obtenTamaño(total)
-    gb_free = obtenTamaño(free)
-    porcentaje_uso = f"{(used / total) * 100:.1f}"
-    return gb_total,gb_free,porcentaje_uso
+def obtener_uso_disco():
+    """Devuelve espacio usado, libre y porcentaje."""
+    try:
+        if not os.path.exists(BASE_MOUNT):
+            return "0 B", "0 B", "0"
+            
+        total, used, free = shutil.disk_usage(BASE_MOUNT)
+        return formatear_tamano(used), formatear_tamano(free), f"{(used / total) * 100:.1f}"
+    except Exception:
+        return "Error", "Error", "0"
 
-def archivosInbox():
-    carpeta_inbox = "/mnt/midrive/inbox"
-    archivos_inbox = os.listdir(carpeta_inbox)
-    archivos_inbox = natsorted(archivos_inbox)
-    lista_archivos_inbox = []
-    for archivo in archivos_inbox:
-        ruta_completa = sanitizar_ruta_entrada(archivo, carpeta_inbox)
-        if os.path.isfile(ruta_completa):
-            tamano = os.path.getsize(ruta_completa)
-            nombre_url = quote(archivo)
-            info_archivo = {"nombre": archivo, "tamano": obtenTamaño(tamano), "url_encoded": nombre_url}
-            lista_archivos_inbox.append(info_archivo)
-    return lista_archivos_inbox
+def listar_archivos_inbox():
+    """Lista archivos planos del Inbox."""
+    if not os.path.exists(INBOX_DIR):
+        return []
+        
+    archivos = natsorted(os.listdir(INBOX_DIR))
+    lista = []
+    
+    for nombre in archivos:
+        ruta = os.path.join(INBOX_DIR, nombre)
+        if os.path.isfile(ruta):
+            # Ignoramos los archivos temporales .part de las subidas
+            if nombre.endswith(".part"):
+                continue
+                
+            lista.append({
+                "nombre": nombre,
+                "tamano": formatear_tamano(os.path.getsize(ruta)),
+                "url_encoded": quote(nombre),
+                "url_descarga": quote(nombre) 
+            })
+    return lista
 
-# --- FUNCIÓN AUXILIAR RECURSIVA ---
-def obtener_arbol_directorios(ruta_base, ruta_relativa=""):
-    """
-    Recorre una carpeta y devuelve un diccionario con sus archivos 
-    y una lista de sus subcarpetas (que a su vez son diccionarios).
-    """
+
+def obtener_arbol_recursivo(ruta_base, ruta_relativa=""):
+    """Construye el árbol de directorios para la vista catalogada."""
     estructura = {
         "nombre": os.path.basename(ruta_base),
         "ruta_relativa": ruta_relativa,
@@ -108,191 +131,260 @@ def obtener_arbol_directorios(ruta_base, ruta_relativa=""):
     }
 
     if os.path.exists(ruta_base):
-        items = natsorted(os.listdir(ruta_base)) # Ordenamos con natsort
-        # --- DEBUG NUEVO ---
-        print(f"[DEBUG] Mirando en: {ruta_base} -> Encontrados: {items}")
-        # -------------------
-        for item in items:
-            ruta_completa = os.path.join(ruta_base, item)
-            nueva_ruta_relativa = os.path.join(ruta_relativa, item) if ruta_relativa else item
+        try:
+            items = natsorted(os.listdir(ruta_base))
+            for item in items:
+                ruta_completa = os.path.join(ruta_base, item)
+                nueva_relativa = os.path.join(ruta_relativa, item) if ruta_relativa else item
 
-            if os.path.isdir(ruta_completa):
-                subcarpeta = obtener_arbol_directorios(ruta_completa, nueva_ruta_relativa)
-                estructura["subcarpetas"].append(subcarpeta)
+                if os.path.isdir(ruta_completa):
+                    estructura["subcarpetas"].append(
+                        obtener_arbol_recursivo(ruta_completa, nueva_relativa)
+                    )
+                elif os.path.isfile(ruta_completa):
+                    estructura["archivos"].append({
+                        "nombre": item,
+                        "tamano": formatear_tamano(os.path.getsize(ruta_completa)),
+                        "url_descarga": quote(nueva_relativa.replace("\\", "/"))
+                    })
+        except PermissionError:
+            pass # Ignoramos carpetas sin acceso
             
-            elif os.path.isfile(ruta_completa):
-                size = os.path.getsize(ruta_completa)
-                estructura["archivos"].append({
-                    "nombre": item,
-                    "tamano": obtenTamaño(size),
-                    "url_descarga": f"{quote(nueva_ruta_relativa)}".replace("\\", "/") 
-                })
-    
     return estructura
 
-# 4. Definimos una ruta para manejar la subida de archivos
-# OJO: Cambiamos 'file: UploadFile' por 'files: List[UploadFile]'
-# Asegúrate de eliminar la importación: from fastapi import Form
-# Asegúrate de mantener la importación: from typing import List
-
-@app.post("/upload")
-async def upload_files(
-    # Eliminamos el argumento 'sub_dir'
-    files: List[UploadFile] = File(...),
-):
-    archivos_guardados = []
-    base_inbox = "/mnt/midrive/inbox"
-    
-    # Aseguramos que el inbox exista
-    if not os.path.exists(base_inbox):
-        os.makedirs(base_inbox)
-
-    for file in files:
-        # El archivo aterriza directamente en la raíz del inbox
-        ubicacion_archivo = os.path.join(base_inbox, file.filename)
-        
-        try:
-            with open(ubicacion_archivo, "wb+") as file_object:
-                shutil.copyfileobj(file.file, file_object)
+def obtener_lista_plana_carpetas(path_base):
+    """Devuelve una lista plana de todas las carpetas para el <select> del frontend."""
+    lista = ["."]
+    if os.path.exists(path_base):
+        for root, dirs, _ in os.walk(path_base):
+            dirs.sort() # Orden alfabético simple para os.walk
+            relative_root = os.path.relpath(root, path_base)
             
-            archivos_guardados.append(file.filename)
-            
-        except Exception as e:
-            # Asegúrate de cerrar el archivo temporal si hay un error
-            await file.close()
-            # Devolvemos un 500 si hay error de escritura
-            raise HTTPException(status_code=500, detail=f"Error al escribir {file.filename}: {str(e)}")
-        finally:
-            await file.close()
-    
-    return {"info": f"Subidos: {', '.join(archivos_guardados)}"}
+            for d in dirs:
+                full_rel = os.path.join(relative_root, d)
+                if full_rel != ".":
+                    clean = full_rel.replace("\\", "/")
+                    if clean.startswith("./"): clean = clean[2:]
+                    lista.append(clean)
+    return natsorted(lista)
 
-@app.delete("/delete/{filename}")
-async def delete_file(filename: str):
-    # 1. Construimos la ruta
-    ruta_archivo = f"/mnt/midrive/inbox/{filename}"
+def generar_nombre_unico(base_path, filename):
+    nombre, extension = os.path.splitext(filename)
+    contador = 1
+    nuevo_filename = filename
+    ruta_final = os.path.join(base_path, nuevo_filename)
     
-    # 2. Comprobamos si existe para evitar errores
-    if os.path.exists(ruta_archivo):
-        try:
-            os.remove(ruta_archivo) # <--- Aquí ocurre la destrucción
-            return {"info": f"Archivo {filename} eliminado"}
-        except Exception as e:
-            return {"error": str(e)}
+    while os.path.exists(ruta_final):
+        nuevo_filename = f"{nombre}({contador}){extension}"
+        ruta_final = os.path.join(base_path, nuevo_filename)
+        contador += 1
+    
+    return nuevo_filename, ruta_final
+
+# ==========================================
+# 5. ENDPOINTS PRINCIPALES (HOME & DELETE)
+# ==========================================
+
+@app.get("/")
+def home(request: Request):
+    used, free, percent = obtener_uso_disco()
+    inbox_files = listar_archivos_inbox()
+    tree = obtener_arbol_recursivo(FILES_DIR)
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "espacio_usado": used,
+        "espacio_libre": free,
+        "porcentaje": percent,
+        "archivos_inbox": inbox_files,
+        "arbol_archivos": tree["subcarpetas"]
+    })
+
+# ==========================================
+# ENDPOINT UNIFICADO DE BORRADO
+# ==========================================
+
+@app.delete("/delete/{zone}/{filepath:path}")
+def delete_item(zone: str, filepath: str):
+
+    if zone == "inbox":
+        base_dir = INBOX_DIR
+    elif zone == "catalog":
+        base_dir = FILES_DIR
     else:
-        return {"error": "El archivo no existe"}
+        raise HTTPException(status_code=400, detail="Zona de borrado inválida")
 
-# --- ENDPOINTS PARA LA VERSIÓN 2 (ORGANIZACIÓN) ---
+    try:
+        filepath = unquote(filepath)
+        path = sanitizar_ruta_entrada(filepath, base_dir)
+        
+        if os.path.exists(path) and os.path.isfile(path):
+            os.remove(path)
+            return {"info": f"Archivo eliminado de {zone}"}
+        
+        raise HTTPException(status_code=404, detail="El archivo no existe")
+        
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Error al borrar: {str(e)}")
 
-# Esquema para cuando el JS nos pida crear una carpeta
+# ==========================================
+# 6. GESTIÓN DE SUBIDAS (CHUNKED UPLOAD)
+# ==========================================
+
+@app.get("/upload_status")
+def get_upload_status(filename: str):
+    """Verifica si hay una subida a medias (.part) y devuelve el tamaño actual."""
+    filename = os.path.basename(filename) # Seguridad básica
+    ruta_parcial = sanitizar_ruta_entrada(f"{filename}.part", INBOX_DIR)
+    
+    if os.path.exists(ruta_parcial):
+        return {"offset": os.path.getsize(ruta_parcial)}
+    return {"offset": 0}
+
+@app.post("/upload_chunk")
+def upload_chunk(
+    file: UploadFile = File(...), 
+    filename: str = Form(...), 
+    chunk_offset: int = Form(...)
+):
+
+    filename = os.path.basename(filename)
+    ruta_parcial = os.path.join(INBOX_DIR, f"{filename}.part")
+
+    try:
+        with open(ruta_parcial, 'ab', buffering=16 * 1024 * 1024) as f:
+            shutil.copyfileobj(file.file, f, length=16 * 1024 * 1024)
+        return {"received": "ok"}
+    except Exception as e:
+        print(f"[ERROR] Fallo escribiendo {filename}: {e}") # Print error
+        raise HTTPException(status_code=500, detail=f"Error I/O: {str(e)}")
+    finally:
+        file.file.close()
+
+@app.post("/upload_finish")
+def finish_upload(
+    filename: str = Form(...), 
+    action: str = Form("check") 
+):
+
+    filename = os.path.basename(filename)
+    ruta_parcial = os.path.join(INBOX_DIR, f"{filename}.part")
+    ruta_final = sanitizar_ruta_entrada(filename, INBOX_DIR)
+
+    if not os.path.exists(ruta_parcial):
+        raise HTTPException(status_code=404, detail="Archivo parcial no encontrado")
+
+    # Gestión de Conflictos
+    if os.path.exists(ruta_final):
+        if action == "check":
+            raise HTTPException(status_code=409, detail="El archivo ya existe")
+        
+        elif action == "rename":
+            nuevo_nombre, nueva_ruta = generar_nombre_unico(INBOX_DIR, filename)
+            filename = nuevo_nombre
+            ruta_final = nueva_ruta
+            
+        elif action == "overwrite":
+            os.remove(ruta_final)
+
+    try:
+        os.rename(ruta_parcial, ruta_final)
+        return {"info": f"Completado: {filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al finalizar: {str(e)}")
+    
+# ==========================================
+# 7. GESTIÓN DE CARPETAS Y MOVIMIENTOS
+# ==========================================
+
 class FolderSchema(BaseModel):
     folder_name: str
 
-# Esquema para cuando el JS nos mande mover un archivo
-class MoveSchema(BaseModel):
-    filename: str
-    destination_folder: str
-
 @app.post("/create-folder")
-async def create_folder(folder: FolderSchema):
-    ruta_files = "/mnt/midrive/files"
-    nueva_ruta = sanitizar_ruta_entrada(folder.folder_name, ruta_files)
-    
-    if not os.path.exists(nueva_ruta):
-        try:
-            os.makedirs(nueva_ruta)
-            return {"info": f"Carpeta '{folder.folder_name}' creada"}
-        except Exception as e:
-            return {"error": str(e)}
-    return {"error": "Esa carpeta ya existe"}
+def create_folder(folder: FolderSchema):
+    try:
+        new_path = sanitizar_ruta_entrada(folder.folder_name, FILES_DIR)
+        if not os.path.exists(new_path):
+            os.makedirs(new_path)
+            return {"info": "Carpeta creada"}
+        return {"error": "La carpeta ya existe"}
+    except Exception as e:
+        return {"error": str(e)}
 
-@app.get("/scan-folders/{filename}")
-async def scan_folders(filename: str):
-    ruta_files = "/mnt/midrive/files"
-    ruta_origen = f"/mnt/midrive/inbox/{filename}" 
-    
-    # --- EL CAMBIO CRUCIAL: Usamos la función recursiva para obtener TODAS las carpetas ---
-    carpetas_existentes = obtener_lista_plana_carpetas(ruta_files)
-    
-    # 2. LÓGICA DE SUGERENCIA (Heurística)
-    # Aquí puedes usar tu CerebroDigital o las reglas simples como antes:
-    sugerencia = "General" 
-    ext = filename.split('.')[-1].lower()
-    if ext in ['jpg', 'png', 'jpeg', 'gif']:
-        sugerencia = "Imagenes"
-    elif ext in ['pdf', 'doc', 'txt']:
-        sugerencia = "Documentos"
-        
-    return {
-        # Ahora esta lista incluye 'Docs/Facturas/2025'
-        "folders": carpetas_existentes,
-        "suggested": sugerencia
-    }
-
-def tarea_mover_bloqueante(origen, ruta_final):
-    """Función de trabajo pesado que será ejecutada en un hilo separado."""
-    shutil.move(origen, ruta_final)
-
-@app.post("/move")
-async def move_file(move_data: MoveSchema):
-
-    origen = sanitizar_ruta_entrada(move_data.filename, "/mnt/midrive/inbox")
-    # OJO: La ruta destino incluye la carpeta seleccionada Y el nombre del archivo
-    
-    carpeta_destino = sanitizar_ruta_entrada(move_data.destination_folder, "/mnt/midrive/files")
-    ruta_final = os.path.join(carpeta_destino, move_data.filename)
-    
-    # Aseguramos que la carpeta destino exista (seguridad)
-    if not os.path.exists(carpeta_destino):
-        os.makedirs(carpeta_destino)
-
-    if not os.path.exists(origen):
-        return {"error": "El archivo origen no existe"}
-    await asyncio.to_thread(tarea_mover_bloqueante, origen, ruta_final)
-    return {"info": f"Archivo movido a {move_data.destination_folder}"}
-
-@app.delete("/delete-cataloged/{filepath:path}")
-async def delete_cataloged_file(filepath: str):
-    BASE_DIR = "/mnt/midrive/files"
-    # Usamos la función de seguridad
-    ruta_a_borrar = sanitizar_ruta_entrada(filepath, BASE_DIR)
-    
-    if os.path.isfile(ruta_a_borrar):
-        try:
-            os.remove(ruta_a_borrar)
-            return {"info": f"Archivo eliminado de forma segura"}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error al borrar: {str(e)}")
-    else:
-        raise HTTPException(status_code=404, detail="Archivo no encontrado.")
-    
-# --- FUNCIÓN AUXILIAR PARA LISTAR TODAS LAS CARPETAS (Necesario para el desplegable) ---
-def obtener_lista_plana_carpetas(path_base):
-    """Utiliza os.walk para listar todas las carpetas en el árbol de forma plana."""
-    
-    lista_plana = []
-    lista_plana.append(".") 
-
-    if os.path.exists(path_base):
-        for root, dirs, files in os.walk(path_base):
-            relative_root = os.path.relpath(root, path_base)
-            
-            for dir_name in dirs:
-                # La ruta completa relativa que usaremos en el dropdown
-                current_relative_path = os.path.join(relative_root, dir_name)
-                # La añadimos solo si no es la raíz (que ya la añadimos como ".")
-                if current_relative_path != ".":
-                    lista_plana.append(current_relative_path.replace("\\", "/")) # Aseguramos barras /
-    
-    return natsorted(lista_plana) # Usamos natsort para que el dropdown se vea bien
-
-
-# --- NUEVO ENDPOINT PARA EL JS ---
 @app.get("/all-folders")
 def get_all_folders():
-    BASE_DIR = "/mnt/midrive/files"
-    if not os.path.exists(BASE_DIR):
-        os.makedirs(BASE_DIR)
+    return {"folders": obtener_lista_plana_carpetas(FILES_DIR)}
+
+@app.get("/scan-folders/{filename}")
+def scan_folders(filename: str):
+    folders = obtener_lista_plana_carpetas(FILES_DIR)
+    
+    # Heurística simple para sugerir carpeta
+    ext = filename.split('.')[-1].lower() if '.' in filename else ""
+    sugerencia = "."
+    
+    if ext in ['jpg', 'png', 'jpeg', 'gif', 'webp', 'svg']:
+        sugerencia = "Imagenes"
+    elif ext in ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx']:
+        sugerencia = "Documentos"
+    elif ext in ['mp4', 'mkv', 'avi', 'mov']:
+        sugerencia = "Videos"
+    elif ext in ['py', 'js', 'html', 'css', 'json']:
+        sugerencia = "Programacion"
         
-    folders = obtener_lista_plana_carpetas(BASE_DIR)
-    return {"folders": folders}
+    return {"folders": folders, "suggested": sugerencia}
+
+class MoveSchema(BaseModel):
+    source_path: str
+    source_zone: str
+    destination_folder: str
+
+def move_file_sync(src, dst):
+    shutil.move(src, dst)
+
+@app.post("/move")
+async def move_file(data: MoveSchema):
+    """
+    Mueve archivos de forma explícita según la zona de origen.
+    """
+    try:
+        source_clean = unquote(data.source_path)
+        dest_clean = unquote(data.destination_folder)
+        
+        # 1. Determinar ORIGEN exacto según la zona
+        if data.source_zone == "inbox":
+            path_origen_final = sanitizar_ruta_entrada(source_clean, INBOX_DIR)
+        elif data.source_zone == "catalog":
+            path_origen_final = sanitizar_ruta_entrada(source_clean, FILES_DIR)
+        else:
+            return {"error": "Zona de origen desconocida"}
+
+        # Verificar existencia
+        if not os.path.isfile(path_origen_final):
+            return {"error": f"El archivo origen no existe en {data.source_zone}"}
+
+        # 2. Determinar DESTINO (Igual que antes)
+        if dest_clean == ".":
+            path_destino_folder = FILES_DIR
+        else:
+            path_destino_folder = sanitizar_ruta_entrada(dest_clean, FILES_DIR)
+            
+        if not os.path.exists(path_destino_folder):
+            os.makedirs(path_destino_folder, exist_ok=True)
+
+        nombre_archivo = os.path.basename(path_origen_final)
+        path_destino_final = os.path.join(path_destino_folder, nombre_archivo)
+
+        # 3. Evitar sobreescribir
+        if os.path.exists(path_destino_final):
+             return {"error": "El archivo ya existe en la carpeta destino"}
+
+        # 4. Mover
+        await asyncio.to_thread(move_file_sync, path_origen_final, path_destino_final)
+        
+        return {"info": f"Movido a {dest_clean}"}
+
+    except Exception as e:
+        return {"error": f"Error al mover: {str(e)}"}

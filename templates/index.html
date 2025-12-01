@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raspberry Pi Smart Drive</title>
+    <link rel="icon" type="image/png" href="/static/img/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         /* --- VARIABLES & RESET --- */
@@ -13,22 +14,25 @@
             --danger-color: #ef4444; --text-main: #e5e7eb; --text-muted: #9ca3af;
             --border-color: #374151; --radius: 8px;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; line-height: 1.6; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; line-height: 1.6; }
         .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; }
+        
+        h1 { color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; font-size: 1.5rem; }
         h3 { font-size: 1.1rem; margin-top: 0; color: var(--text-main); }
 
         /* --- CARDS & SECTIONS --- */
-        .section-box, .upload-zone, dialog { background: var(--card-bg); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .upload-zone { border: 2px dashed var(--border-color); text-align: center; margin-bottom: 25px; }
+        .section-box, .upload-zone { background: var(--card-bg); border-radius: var(--radius); padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .upload-zone { border: 2px dashed var(--border-color); text-align: center; }
         .upload-zone:hover { border-color: var(--accent-color); }
 
         /* --- INPUTS & BUTTONS --- */
         input[type="text"], select, input[type="file"] { background: #2d2d2d; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: var(--radius); width: 100%; box-sizing: border-box; outline: none; }
         input[type="text"]:focus, select:focus { border-color: var(--accent-color); }
-        .input-group { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .input-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .input-group > * { flex: 1 1 100%; min-width: 150px; }
 
-        button, .btn-action { background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: var(--radius); font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; font-family: 'Inter', sans-serif; font-size: 0.9rem;}
+        button, .btn-action { background-color: var(--accent-color); color: white; border: none; padding: 10px 16px; border-radius: var(--radius); font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; font-family: 'Inter', sans-serif; font-size: 0.9rem; white-space: nowrap; }
         button:hover, .btn-action:hover { background-color: var(--accent-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -40,56 +44,111 @@
         .btn-icon-only { padding: 6px; }
 
         /* --- ICONOS SVG --- */
-        .icon { width: 20px; height: 20px; fill: currentColor; }
+        .icon { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
         .btn-small .icon { width: 16px; height: 16px; }
 
-        /* --- TABLES & TREE --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-        th, td { padding: 12px; border-bottom: 1px solid #2d2d2d; text-align: left; }
-        th { color: var(--text-muted); font-weight: 500; }
-        .table-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        /* --- TABLES (RESPONSIVE) --- */
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; min-width: 300px; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #2d2d2d; text-align: left; vertical-align: middle; }
+        th { color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+        .table-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
 
-        .folder-node { margin-left: 15px; border-left: 1px solid #333; }
-        .folder-summary { padding: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 4px; }
+        /* --- TREE VIEW --- */
+        .folder-node { margin-left: 10px; border-left: 1px solid #333; }
+        .folder-summary { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 4px; user-select: none; }
         .folder-summary:hover { background: rgba(255,255,255,0.05); color: var(--accent-color); }
         summary::-webkit-details-marker { display: none; }
+        .folder-summary.drag-over { background-color: rgba(59, 130, 246, 0.4) !important; border: 1px dashed #3b82f6; }
+        .draggable-file { cursor: grab; }
         
         /* --- UTILS --- */
-        .flex-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
         .progress-bar { background: var(--accent-color); height: 8px; border-radius: 4px; transition: width 0.3s; }
-        dialog { width: 90%; max-width: 450px; } dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
+        
+        /* --- DIALOG (CENTRADO CORREGIDO) --- */
+        dialog { 
+            /* Posicionamiento Absoluto al Centro */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0; /* Importante para anular márgenes del navegador */
+            
+            /* Estilo */
+            width: 90%; 
+            max-width: 450px; 
+            color: var(--text-main);
+            background: var(--card-bg); 
+            border-radius: var(--radius); 
+            padding: 20px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+        }
+        dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
+        dialog label { color: var(--text-muted); display: block; margin-bottom: 5px; }
+        
         hr { border: 0; border-top: 1px solid var(--border-color); margin: 30px 0; }
+
+        /* --- MEDIA QUERIES (MÓVIL) --- */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.2rem; }
+            .section-box, .upload-zone { padding: 12px; }
+            td:nth-child(2), th:nth-child(2) { font-size: 0.8rem; }
+            .btn-small { padding: 8px 12px; }
+            .table-actions { justify-content: flex-start; margin-top: 5px; }
+            td:last-child { min-width: 120px; }
+        }
     </style>
 </head>
 <body>
-    {# Macro de renderizado del árbol (Backend no afectado) #}
+    {# Macro de renderizado del árbol #}
     {% macro render_carpeta(carpeta) %}
     <details class="folder-node">
-        <summary class="folder-summary">
-            <span>📁 {{ carpeta.nombre }}</span> 
-            <span class="file-count" style="color: var(--text-muted); font-weight: normal; margin-left: auto;">({{ carpeta.archivos|length }})</span>
+        <summary class="folder-summary drop-zone"
+                 data-folder="{{ carpeta.ruta_relativa|default(carpeta.nombre) }}"
+                 ondragover="allowDrop(event)" 
+                 ondrop="handleDrop(event)" 
+                 ondragleave="handleDragLeave(event)">
+            
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📁 {{ carpeta.nombre }}</span> 
+            <span class="file-count" style="color: var(--text-muted); margin-left: auto; font-size: 0.85em;">
+                ({{ carpeta.archivos|length }})
+            </span>
         </summary>
-        <div style="padding-left: 10px;">
-            {% for sub in carpeta.subcarpetas %} {{ render_carpeta(sub) }} {% endfor %}
+        
+        <div style="padding-left: 5px;">
+            {% for sub in carpeta.subcarpetas %}
+                {{ render_carpeta(sub) }}
+            {% endfor %}
+
             {% if carpeta.archivos %}
-            <table style="margin-bottom: 15px;">
-                {% for archivo in carpeta.archivos %}
-                <tr>
-                    <td style="width: 60%;">📄 {{ archivo.nombre }}</td>
-                    <td style="color: var(--text-muted); text-align: right;">{{ archivo.tamano }}</td>
-                    <td style="text-align: right;">
-                        <div class="table-actions">
-                            <a href="/data/files/{{ archivo.url_descarga }}" target="_blank" class="btn-action btn-small btn-secondary btn-icon-only" title="Descargar">
-                                <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                            </a>
-                            <button class="btn-small btn-danger btn-icon-only" onclick="borrarCatalogado('{{ archivo.url_descarga }}')" title="Eliminar">
-                                <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+            <div class="table-responsive">
+                <table style="margin-bottom: 15px;">
+                    {% for archivo in carpeta.archivos %}
+                    <tr draggable="true" 
+                        class="draggable-file" 
+                        data-filepath="{{ archivo.url_descarga }}"
+                        data-zone="catalog"  
+                        ondragstart="handleDragStart(event)">
+                        
+                        <td style="width: 50%; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📄 {{ archivo.nombre }}</td>
+                        <td style="color: var(--text-muted); text-align: right; white-space: nowrap;">{{ archivo.tamano }}</td>
+                        <td style="text-align: right;">
+                            <div class="table-actions">
+                                <a href="/data/files/{{ archivo.url_descarga }}" target="_blank" class="btn-action btn-small btn-secondary btn-icon-only">
+                                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                                </a>
+                                <button class="btn-small btn-danger btn-icon-only" onclick="borrarCatalogado('{{ archivo.url_descarga }}')">
+                                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
             {% endif %}
         </div>
     </details>
@@ -102,7 +161,7 @@
         <div class="section-box">
             <div class="flex-row">
                 <span style="color: var(--text-muted); font-weight: 600;">ESTADO ALMACENAMIENTO</span>
-                <span>{{ espacio_libre }} libre / {{ espacio_total }}</span>
+                <span style="font-size: 0.9em;">{{ espacio_usado }} / {{ espacio_libre }}</span>
             </div>
             <div style="background: #333; border-radius: 4px; overflow: hidden;"><div class="progress-bar" style="width: {{ porcentaje }}%;"></div></div>
         </div>
@@ -113,7 +172,7 @@
             <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
                 <input type="file" name="files" multiple required>
                 <div style="margin-top: 15px;">
-                    <button type="submit" style="padding: 12px 24px; font-size: 1rem;">
+                    <button type="submit" style="width: 100%; padding: 12px; font-size: 1rem;">
                         <svg class="icon" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
                         Subir Archivos
                     </button>
@@ -126,39 +185,46 @@
             <h3>Nueva Carpeta</h3>
             <div class="input-group">
                 <select id="parentFolderSelect"><option value=".">Cargando...</option></select>
-                <input type="text" id="newFolderName" placeholder="Nombre de la carpeta">
+                <input type="text" id="newFolderName" placeholder="Nombre carpeta">
                 <button onclick="crearCarpetaGlobal()">Crear</button>
             </div>
-            <small style="color: var(--text-muted); margin-top: 5px; display: block;">Ubicación base: /mnt/midrive/files/</small>
+            <small style="color: var(--text-muted); margin-top: 5px; display: block;">Base: /mnt/midrive/files/</small>
         </div>
 
         {# INBOX #}
         <h3 style="margin-top: 40px;">Bandeja de Entrada (Inbox)</h3>
         <div class="section-box" style="padding: 0; overflow: hidden;">
-            <table style="margin-top: 0;">
-                <thead><tr><th style="padding-left: 20px;">Nombre</th><th>Tamaño</th><th style="text-align: right; padding-right: 20px;">Acciones</th></tr></thead>
-                <tbody>
-                    {% for archivo in archivos_inbox %}
-                    <tr>
-                        <td style="padding-left: 20px; font-weight: 500;">{{ archivo.nombre }}</td>
-                        <td style="color: var(--text-muted);">{{ archivo.tamano }}</td>
-                        <td style="padding-right: 20px;">
-                            <div class="table-actions">
-                                <a href="/data/inbox/{{ archivo.url_encoded }}" target="_blank" class="btn-action btn-small btn-secondary" title="Descargar">
-                                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Descargar
-                                </a>
-                                <button class="btn-small btn-secondary" onclick="moverArchivo('{{ archivo.nombre }}')">Mover</button>
-                                <button class="btn-small btn-danger btn-icon-only" onclick="borrarArchivo('{{ archivo.nombre }}')" title="Eliminar">
-                                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">Inbox vacío.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table style="margin-top: 0;">
+                    <thead><tr><th style="padding-left: 10px;">Nombre</th><th>Tamaño</th><th style="text-align: right; padding-right: 10px;">Acciones</th></tr></thead>
+                        <tbody>
+                        {% for archivo in archivos_inbox %}
+                        <tr draggable="true" 
+                            class="draggable-file" 
+                            data-filepath="{{ archivo.nombre }}"
+                            data-zone="inbox"    
+                            ondragstart="handleDragStart(event)">
+                            
+                            <td style="padding-left: 10px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ archivo.nombre }}</td>
+                            <td style="color: var(--text-muted); white-space: nowrap;">{{ archivo.tamano }}</td>
+                            <td style="padding-right: 10px;">
+                                <div class="table-actions">
+                                    <a href="/data/inbox/{{ archivo.url_encoded }}" target="_blank" class="btn-action btn-small btn-secondary" title="Descargar">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                                    </a>
+                                    <button class="btn-small btn-secondary" onclick="moverArchivo('{{ archivo.nombre }}')">Mover</button>
+                                    <button class="btn-small btn-danger btn-icon-only" onclick="borrarArchivo('{{ archivo.nombre }}')" title="Eliminar">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">Inbox vacío.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <hr>
@@ -173,7 +239,10 @@
     {# DIALOG #}
     <dialog id="moveDialog">
         <h3 style="margin-bottom: 15px;">Mover Archivo</h3>
-        <p style="color: var(--text-muted); margin-bottom: 20px;">Archivo: <strong id="modalFilename" style="color: white;"></strong></p>
+        <p style="color: var(--text-muted); margin-bottom: 20px; overflow-wrap: break-word; word-break: break-all;">
+            Archivo: <strong id="modalFilename" style="color: white;"></strong>
+        </p>
+        
         <label style="font-size: 0.9rem;">Seleccionar Destino:</label>
         <select id="folderSelect" style="margin-top: 5px;"></select>
         
@@ -190,6 +259,6 @@
         </div>
     </dialog>
 
-    <script src="{{ url_for('static', path='js/main.js') }}"></script>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
