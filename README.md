@@ -86,12 +86,11 @@ Luego abre en el navegador:
 
 ## 🌐 Acceso remoto (portfolio)
 
-Sí, merece la pena incluirlo en el README para tu portfolio, aunque de forma resumida:
 
 - **Cloudflare Zero Trust (Tunnel):** exposición segura sin abrir puertos en el router.
 - **Tailscale:** acceso privado tipo VPN mesh entre tus dispositivos.
 
-Recomendación: deja aquí el resumen y, si quieres, crea luego una guía más detallada en `docs/deployment.md`.
+Recomendación: deja aquí el resumen y, si quieres, crea luego una guía más sdetallada en `docs/deployment.md`.
 
 ## 🔒 Nota de seguridad
 
