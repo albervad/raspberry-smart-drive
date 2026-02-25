@@ -12,17 +12,13 @@
         <div class="folder-actions" style="margin-left: auto; display: flex; gap: 5px; align-items: center;">
             <span class="file-count" style="color: var(--text-muted); font-size: 0.85em; margin-right: 5px;">(...)</span>
             
-            <button class="btn-small btn-secondary btn-icon-only" title="Descargar ZIP"
-                    onclick="event.stopPropagation(); descargarZip('{{ carpeta.ruta_relativa|default(carpeta.nombre) }}')">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            </button>
-
-            {% if carpeta.ruta_relativa %}
-            <button class="btn-small btn-danger btn-icon-only" title="Borrar Carpeta"
-                    onclick="event.stopPropagation(); borrarCarpeta('{{ carpeta.ruta_relativa }}')">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-            </button>
-            {% endif %}
+            <div class="action-menu">
+                <button class="btn-small btn-secondary menu-trigger" title="Acciones"
+                        data-menu-type="folder"
+                        data-item-path="{{ carpeta.ruta_relativa|default(carpeta.nombre) }}"
+                        data-can-delete="{{ 1 if carpeta.ruta_relativa else 0 }}"
+                        onclick="return openActionMenuFromTrigger(this)">⋮</button>
+            </div>
         </div>
     </summary>
     
@@ -37,8 +33,12 @@
                     <td style="color: var(--text-muted); text-align: right;">{{ archivo.tamano }}</td>
                     <td style="text-align: right;">
                         <div class="table-actions">
-                            <a href="/data/files/{{ archivo.url_descarga }}" target="_blank" class="btn-action btn-small btn-secondary btn-icon-only"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></a>
-                            <button class="btn-small btn-danger btn-icon-only" onclick="borrarCatalogado('{{ archivo.url_descarga }}')"><svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                            <div class="action-menu">
+                                <button class="btn-small btn-secondary menu-trigger" title="Acciones"
+                                        data-menu-type="catalog-file"
+                                        data-item-path="{{ archivo.url_descarga }}"
+                                        onclick="return openActionMenuFromTrigger(this)">⋮</button>
+                            </div>
                         </div>
                     </td>
                 </tr>

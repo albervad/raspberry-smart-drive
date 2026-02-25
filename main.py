@@ -341,6 +341,12 @@ class MoveSchema(BaseModel):
     source_zone: str
     destination_folder: str
 
+
+class RenameSchema(BaseModel):
+    zone: str
+    item_path: str
+    new_name: str
+
 def move_file_sync(src, dst):
     shutil.move(src, dst)
 
@@ -388,6 +394,50 @@ async def move_file(data: MoveSchema):
 
     except Exception as e:
         return {"error": f"Error al mover: {str(e)}"}
+
+
+@app.post("/rename")
+def rename_item(data: RenameSchema):
+    try:
+        if data.zone not in ["catalog", "folder"]:
+            raise HTTPException(status_code=400, detail="Zona inválida")
+
+        clean_path = unquote(data.item_path).strip()
+        new_name = data.new_name.strip()
+
+        if not new_name:
+            raise HTTPException(status_code=400, detail="El nuevo nombre es obligatorio")
+
+        if "/" in new_name or "\\" in new_name:
+            raise HTTPException(status_code=400, detail="Nombre inválido")
+
+        source_path = sanitizar_ruta_entrada(clean_path, FILES_DIR)
+
+        if not os.path.exists(source_path):
+            raise HTTPException(status_code=404, detail="Elemento no encontrado")
+
+        if data.zone == "folder" and not os.path.isdir(source_path):
+            raise HTTPException(status_code=400, detail="La ruta no es una carpeta")
+
+        if data.zone == "catalog" and not os.path.isfile(source_path):
+            raise HTTPException(status_code=400, detail="La ruta no es un archivo")
+
+        parent_dir = os.path.dirname(source_path)
+        target_path = os.path.join(parent_dir, new_name)
+        target_rel = os.path.relpath(target_path, FILES_DIR)
+        safe_target = sanitizar_ruta_entrada(target_rel, FILES_DIR)
+
+        if os.path.exists(safe_target):
+            raise HTTPException(status_code=409, detail="Ya existe un elemento con ese nombre")
+
+        os.rename(source_path, safe_target)
+        new_relative = os.path.relpath(safe_target, FILES_DIR).replace("\\", "/")
+        return {"info": "Renombrado correctamente", "new_path": new_relative}
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Error al renombrar: {str(e)}")
 
 # ==========================================
 # GESTIÓN AVANZADA DE CARPETAS (ZIP & BORRAR)

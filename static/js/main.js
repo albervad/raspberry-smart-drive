@@ -201,6 +201,7 @@ function formatAndRenderFolders(selectElement, folders, suggestedFolder = null) 
 // Recargar árbol vía AJAX manteniendo estado abierto
 async function recargarArbol() {
     try {
+        if (typeof closeActionMenus === 'function') closeActionMenus();
         const openPaths = new Set();
         document.querySelectorAll('#file-tree-root details[open] > summary').forEach(summary => {
             const path = summary.getAttribute('data-folder');
@@ -287,6 +288,101 @@ window.handleDrop = async function(event) {
 window.borrarArchivo = async function(nombre) { if (confirm("¿Eliminar " + nombre + "?")) await ejecutarBorrado('inbox', nombre); };
 window.borrarCatalogado = async function(ruta) { if (confirm("¿Eliminar del catálogo?")) await ejecutarBorrado('catalog', ruta); };
 
+let activeMenuTrigger = null;
+
+function getGlobalMenuElement() {
+    return document.getElementById('global-action-menu');
+}
+
+window.openActionMenu = function(event, triggerBtn) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const sameTrigger = activeMenuTrigger === triggerBtn;
+    closeActionMenus();
+    if (sameTrigger) return;
+
+    const menu = getGlobalMenuElement();
+    if (!menu || !triggerBtn) return;
+
+    const menuType = triggerBtn.dataset.menuType;
+    const itemPath = triggerBtn.dataset.itemPath;
+    const canDelete = triggerBtn.dataset.canDelete === '1';
+    if (!menuType || !itemPath) return;
+
+    const actions = [];
+    if (menuType === 'folder') {
+        actions.push({ label: 'Descargar ZIP', danger: false, handler: () => descargarZip(itemPath) });
+        actions.push({ label: 'Renombrar', danger: false, handler: () => renombrarCarpeta(itemPath) });
+        if (canDelete) {
+            actions.push({ label: 'Borrar', danger: true, handler: () => borrarCarpeta(itemPath) });
+        }
+    } else if (menuType === 'catalog-file') {
+        actions.push({ label: 'Descargar', danger: false, handler: () => descargarArchivo(`/data/files/${itemPath}`) });
+        actions.push({ label: 'Abrir', danger: false, handler: () => abrirArchivo(`/data/files/${itemPath}`) });
+        actions.push({ label: 'Renombrar', danger: false, handler: () => renombrarCatalogado(itemPath) });
+        actions.push({ label: 'Borrar', danger: true, handler: () => borrarCatalogado(itemPath) });
+    }
+
+    menu.innerHTML = '';
+    actions.forEach(action => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `menu-item${action.danger ? ' danger' : ''}`;
+        button.textContent = action.label;
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeActionMenus();
+            action.handler();
+        });
+        menu.appendChild(button);
+    });
+
+    menu.style.display = 'block';
+    positionGlobalMenu(triggerBtn, menu);
+    activeMenuTrigger = triggerBtn;
+};
+
+window.openActionMenuFromTrigger = function(triggerBtn) {
+    openActionMenu(window.event || null, triggerBtn);
+    return false;
+};
+
+window.closeActionMenus = function() {
+    const menu = getGlobalMenuElement();
+    if (menu) {
+        menu.style.display = 'none';
+        menu.innerHTML = '';
+    }
+    activeMenuTrigger = null;
+};
+
+function positionGlobalMenu(triggerBtn, menu) {
+    if (!triggerBtn || !menu) return;
+
+    const triggerRect = triggerBtn.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const margin = 8;
+    const gap = 6;
+
+    let left = triggerRect.right - menuRect.width;
+    if (left < margin) left = margin;
+    if (left + menuRect.width > window.innerWidth - margin) {
+        left = window.innerWidth - menuRect.width - margin;
+    }
+
+    let top = triggerRect.bottom + gap;
+    if (top + menuRect.height > window.innerHeight - margin) {
+        top = triggerRect.top - menuRect.height - gap;
+    }
+    if (top < margin) top = margin;
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+}
+
 async function ejecutarBorrado(zona, ruta) {
     try {
         const res = await fetch(`/delete/${zona}/${encodeURIComponent(ruta)}`, { method: 'DELETE' });
@@ -349,7 +445,75 @@ window.descargarZip = function(path) {
     window.open(`/download-folder/${encodeURIComponent(path)}`, '_blank');
 };
 
+window.descargarArchivo = function(url) {
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = '';
+    enlace.rel = 'noopener';
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+};
+
+window.abrirArchivo = function(url) {
+    window.open(url, '_blank', 'noopener');
+};
+
+window.renombrarCarpeta = async function(path) {
+    const nombreActual = path.split('/').pop();
+    const nuevoNombre = prompt("Nuevo nombre de carpeta:", nombreActual);
+    if (!nuevoNombre || nuevoNombre === nombreActual) return;
+
+    try {
+        const res = await fetch('/rename', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ zone: 'folder', item_path: path, new_name: nuevoNombre })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            await recargarArbol();
+            currentSelectedFolder = ".";
+            const label = document.getElementById('selected-folder-name');
+            if (label) label.innerText = "Raíz (/files/)";
+        } else {
+            alert("Error: " + (data.detail || data.error || "No se pudo renombrar"));
+        }
+    } catch (e) {
+        alert("Error de red");
+    }
+};
+
+window.renombrarCatalogado = async function(rutaCodificada) {
+    let ruta = rutaCodificada;
+    try { ruta = decodeURIComponent(rutaCodificada); } catch (e) {}
+
+    const nombreActual = ruta.split('/').pop();
+    const nuevoNombre = prompt("Nuevo nombre del archivo:", nombreActual);
+    if (!nuevoNombre || nuevoNombre === nombreActual) return;
+
+    try {
+        const res = await fetch('/rename', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ zone: 'catalog', item_path: ruta, new_name: nuevoNombre })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            await recargarArbol();
+        } else {
+            alert("Error: " + (data.detail || data.error || "No se pudo renombrar"));
+        }
+    } catch (e) {
+        alert("Error de red");
+    }
+};
+
 document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-menu') && !e.target.closest('#global-action-menu')) {
+        closeActionMenus();
+    }
+
     if (!e.target.closest('.folder-summary') && !e.target.closest('button')) {
         document.querySelectorAll('.folder-summary.selected').forEach(el => el.classList.remove('selected'));
         currentSelectedFolder = ".";
@@ -357,6 +521,20 @@ document.addEventListener('click', function(e) {
         if(label) label.innerText = "Raíz (/files/)";
     }
 });
+
+window.addEventListener('resize', function() {
+    const menu = getGlobalMenuElement();
+    if (menu && menu.style.display === 'block' && activeMenuTrigger) {
+        positionGlobalMenu(activeMenuTrigger, menu);
+    }
+});
+
+window.addEventListener('scroll', function() {
+    const menu = getGlobalMenuElement();
+    if (menu && menu.style.display === 'block' && activeMenuTrigger) {
+        positionGlobalMenu(activeMenuTrigger, menu);
+    }
+}, true);
 
 // OTRAS
 window.crearCarpeta = async function() {
