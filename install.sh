@@ -94,7 +94,7 @@ fi
 
 echo "Instalando librerías..."
 # Ejecutamos pip dentro del venv
-su - $REAL_USER -c "cd $CURRENT_DIR && source venv/bin/activate && pip install --upgrade pip && pip install fastapi uvicorn python-multipart jinja2 natsort aiofiles"
+su - $REAL_USER -c "cd $CURRENT_DIR && source venv/bin/activate && pip install --upgrade pip && pip install fastapi uvicorn python-multipart jinja2 natsort aiofiles pypdf"
 
 # ---------------------------------------------------------
 # 5. CREAR SERVICIO SYSTEMD (AUTO-ARRANQUE)

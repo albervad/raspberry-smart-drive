@@ -1,6 +1,9 @@
 import shutil
 import os
 import asyncio
+import re
+import zipfile
+import html
 from contextlib import asynccontextmanager
 from urllib.parse import quote, unquote
 from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Form, BackgroundTasks
@@ -70,9 +73,15 @@ def sanitizar_ruta_entrada(user_input: str, base_dir: str) -> str:
     # Combinar y resolver ruta absoluta
     requested_path = os.path.join(base_dir, user_input)
     safe_path = os.path.realpath(requested_path)
+    base_real = os.path.realpath(base_dir)
     
     # Verificar que seguimos dentro de la jaula
-    if not safe_path.startswith(os.path.realpath(base_dir)):
+    try:
+        in_jail = os.path.commonpath([safe_path, base_real]) == base_real
+    except ValueError:
+        in_jail = False
+
+    if not in_jail:
         raise HTTPException(
             status_code=403, 
             detail=f"Forbidden: Acceso denegado a {user_input}"
@@ -181,6 +190,187 @@ def generar_nombre_unico(base_path, filename):
     
     return nuevo_filename, ruta_final
 
+MAX_CONTENT_SEARCH_BYTES = 8 * 1024 * 1024
+MAX_SEARCH_RESULTS = 120
+MAX_EXTRACT_CHARS = 150000
+CONTENT_SEARCH_EXTENSIONS = {
+    ".txt", ".md", ".csv", ".json", ".log", ".ini", ".yaml", ".yml",
+    ".xml", ".html", ".css", ".js", ".py", ".java", ".ts", ".tsx",
+    ".jsx", ".sql", ".sh", ".conf", ".rtf", ".pdf", ".docx", ".odt"
+}
+
+
+def ruta_real_en_base(path: str, base_dir: str) -> bool:
+    try:
+        base_real = os.path.realpath(base_dir)
+        file_real = os.path.realpath(path)
+        return os.path.commonpath([file_real, base_real]) == base_real
+    except Exception:
+        return False
+
+
+def archivo_apto_para_busqueda_contenido(file_path: str) -> bool:
+    extension = os.path.splitext(file_path)[1].lower()
+    if extension not in CONTENT_SEARCH_EXTENSIONS:
+        return False
+    try:
+        return os.path.getsize(file_path) <= MAX_CONTENT_SEARCH_BYTES
+    except OSError:
+        return False
+
+
+def extraer_texto_plano(file_path: str) -> str:
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            return f.read(MAX_EXTRACT_CHARS)
+    except Exception:
+        return ""
+
+
+def extraer_texto_pdf(file_path: str) -> str:
+    try:
+        from pypdf import PdfReader
+    except Exception:
+        return ""
+
+    try:
+        reader = PdfReader(file_path)
+        partes = []
+        for page in reader.pages[:25]:
+            texto = page.extract_text() or ""
+            if texto:
+                partes.append(texto)
+            if sum(len(p) for p in partes) >= MAX_EXTRACT_CHARS:
+                break
+        return "\n".join(partes)[:MAX_EXTRACT_CHARS]
+    except Exception:
+        return ""
+
+
+def extraer_texto_docx(file_path: str) -> str:
+    try:
+        with zipfile.ZipFile(file_path, "r") as zf:
+            xml_data = []
+            for name in zf.namelist():
+                if name.startswith("word/") and name.endswith(".xml"):
+                    try:
+                        xml_data.append(zf.read(name).decode("utf-8", errors="ignore"))
+                    except Exception:
+                        continue
+        if not xml_data:
+            return ""
+        text = " ".join(xml_data)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = html.unescape(text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return text[:MAX_EXTRACT_CHARS]
+    except Exception:
+        return ""
+
+
+def extraer_texto_para_busqueda(file_path: str) -> str:
+    extension = os.path.splitext(file_path)[1].lower()
+
+    if extension in {".txt", ".md", ".csv", ".json", ".log", ".ini", ".yaml", ".yml",
+                     ".xml", ".html", ".css", ".js", ".py", ".java", ".ts", ".tsx",
+                     ".jsx", ".sql", ".sh", ".conf", ".rtf"}:
+        return extraer_texto_plano(file_path)
+
+    if extension == ".pdf":
+        return extraer_texto_pdf(file_path)
+
+    if extension in {".docx", ".odt"}:
+        return extraer_texto_docx(file_path)
+
+    # Excluimos imágenes, vídeos y binarios no legibles
+    return ""
+
+
+def extraer_fragmento_coincidente(file_path: str, query_lower: str) -> str:
+    text = extraer_texto_para_busqueda(file_path)
+    if not text:
+        return ""
+
+    text_lower = text.lower()
+    idx = text_lower.find(query_lower)
+    if idx == -1:
+        return ""
+
+    inicio = max(0, idx - 20)
+    fin = min(len(text), idx + len(query_lower) + 20)
+    return text[inicio:fin].strip()
+
+
+def buscar_archivos(query: str, mode: str = "both"):
+    query_lower = query.lower().strip()
+    resultados = []
+
+    buscar_nombre = mode in {"both", "name"}
+    buscar_contenido = mode in {"both", "content"}
+
+    if not query_lower:
+        return resultados
+
+    zonas = [
+        ("inbox", INBOX_DIR),
+        ("catalog", FILES_DIR)
+    ]
+
+    for zona, base_dir in zonas:
+        if not os.path.exists(base_dir):
+            continue
+
+        for root, _, files in os.walk(base_dir):
+            for nombre in files:
+                if nombre.endswith(".part"):
+                    continue
+
+                ruta_absoluta = os.path.join(root, nombre)
+                if os.path.islink(ruta_absoluta):
+                    continue
+                if not ruta_real_en_base(ruta_absoluta, base_dir):
+                    continue
+                ruta_relativa = os.path.relpath(ruta_absoluta, base_dir).replace("\\", "/")
+
+                coincide_nombre = buscar_nombre and query_lower in nombre.lower()
+                coincide_contenido = False
+                fragmento = ""
+
+                if buscar_contenido and archivo_apto_para_busqueda_contenido(ruta_absoluta):
+                    fragmento = extraer_fragmento_coincidente(ruta_absoluta, query_lower)
+                    coincide_contenido = bool(fragmento)
+
+                if not coincide_nombre and not coincide_contenido:
+                    continue
+
+                if zona == "inbox":
+                    url_encoded = quote(ruta_relativa)
+                    url_abrir = f"/data/inbox/{url_encoded}"
+                else:
+                    url_encoded = quote(ruta_relativa)
+                    url_abrir = f"/data/files/{url_encoded}"
+
+                tipo_coincidencia = []
+                if coincide_nombre:
+                    tipo_coincidencia.append("nombre")
+                if coincide_contenido:
+                    tipo_coincidencia.append("contenido")
+
+                resultados.append({
+                    "zona": zona,
+                    "nombre": nombre,
+                    "ruta_relativa": ruta_relativa,
+                    "tamano": formatear_tamano(os.path.getsize(ruta_absoluta)),
+                    "url": url_abrir,
+                    "coincidencia": " + ".join(tipo_coincidencia),
+                    "fragmento": fragmento
+                })
+
+                if len(resultados) >= MAX_SEARCH_RESULTS:
+                    return resultados
+
+    return resultados
+
 # ==========================================
 # 5. ENDPOINTS PRINCIPALES (HOME & DELETE)
 # ==========================================
@@ -199,6 +389,22 @@ def home(request: Request):
         "archivos_inbox": inbox_files,
         "arbol_archivos": tree["subcarpetas"]
     })
+
+
+@app.get("/search")
+def search_files(q: str = "", mode: str = "both"):
+    query = q.strip()
+    search_mode = mode.strip().lower()
+
+    if search_mode not in {"both", "name", "content"}:
+        raise HTTPException(status_code=400, detail="Modo de búsqueda inválido")
+    if len(query) > 120:
+        raise HTTPException(status_code=400, detail="Consulta demasiado larga")
+    if len(query) < 2:
+        return {"results": [], "total": 0}
+
+    results = buscar_archivos(query, mode=search_mode)
+    return {"results": results, "total": len(results)}
 
 # ==========================================
 # ENDPOINT UNIFICADO DE BORRADO

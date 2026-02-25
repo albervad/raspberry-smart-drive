@@ -6,6 +6,7 @@
 document.addEventListener("DOMContentLoaded", function() {
     initTreeCounts();
     fetchAndRenderFolders();
+    initSearch();
 });
 
 const form = document.getElementById('upload-form');
@@ -13,6 +14,145 @@ const dialog = document.getElementById('moveDialog');
 let archivoActual = ""; 
 let draggedItemPath = null; 
 let draggedItemZone = null;
+
+function initSearch() {
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const searchMode = document.getElementById('search-mode');
+
+    if (!searchForm || !searchInput || !searchMode) return;
+
+    searchForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const query = searchInput.value.trim();
+        const mode = searchMode.value;
+        await ejecutarBusqueda(query, mode);
+    });
+}
+
+async function ejecutarBusqueda(query, mode = 'both') {
+    const resultsBox = document.getElementById('search-results');
+    if (!resultsBox) return;
+
+    if (query.length < 2) {
+        resultsBox.style.display = 'block';
+        resultsBox.innerHTML = `<p style="margin: 0; color: var(--text-muted);">Escribe al menos 2 caracteres para buscar.</p>`;
+        return;
+    }
+
+    resultsBox.style.display = 'block';
+    resultsBox.innerHTML = `<p style="margin: 0; color: var(--text-muted);">Buscando...</p>`;
+
+    try {
+        const res = await fetch(`/search?q=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`);
+        if (!res.ok) throw new Error('Error de búsqueda');
+
+        const data = await res.json();
+        renderSearchResults(data.results || [], query);
+    } catch (error) {
+        resultsBox.innerHTML = `<p style="margin: 0; color: var(--danger-color);">No se pudo completar la búsqueda.</p>`;
+    }
+}
+
+function renderSearchResults(results, query) {
+    const resultsBox = document.getElementById('search-results');
+    if (!resultsBox) return;
+
+    resultsBox.innerHTML = '';
+
+    if (!results.length) {
+        resultsBox.innerHTML = `<p style="margin: 0; color: var(--text-muted);">Sin resultados para "${escapeHtml(query)}".</p>`;
+        return;
+    }
+
+    const info = document.createElement('div');
+    info.style.marginBottom = '8px';
+    info.style.color = 'var(--text-muted)';
+    info.style.fontSize = '0.9rem';
+    info.textContent = `Resultados: ${results.length}`;
+    resultsBox.appendChild(info);
+
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'table-responsive';
+
+    const table = document.createElement('table');
+    table.style.marginTop = '0';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Archivo</th><th>Zona</th><th>Coincidencia</th><th>Fragmento</th><th style="text-align:right;">Acciones</th></tr>';
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    results.forEach(item => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.style.maxWidth = '220px';
+        tdName.style.overflow = 'hidden';
+        tdName.style.textOverflow = 'ellipsis';
+        tdName.style.whiteSpace = 'nowrap';
+        tdName.textContent = `${item.nombre} (${item.tamano})`;
+
+        const tdZone = document.createElement('td');
+        tdZone.textContent = item.zona === 'inbox' ? 'Inbox' : 'Catálogo';
+
+        const tdMatch = document.createElement('td');
+        tdMatch.textContent = item.coincidencia;
+
+        const tdSnippet = document.createElement('td');
+        tdSnippet.style.maxWidth = '280px';
+        tdSnippet.style.overflow = 'hidden';
+        tdSnippet.style.textOverflow = 'ellipsis';
+        tdSnippet.style.whiteSpace = 'nowrap';
+        tdSnippet.style.color = 'var(--text-muted)';
+        tdSnippet.textContent = item.fragmento || '-';
+
+        const tdActions = document.createElement('td');
+        tdActions.style.textAlign = 'right';
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'table-actions';
+
+        const btnDownload = document.createElement('a');
+        btnDownload.href = item.url;
+        btnDownload.className = 'btn-action btn-small btn-secondary';
+        btnDownload.setAttribute('download', item.nombre);
+        btnDownload.title = 'Descargar';
+        btnDownload.textContent = 'Descargar';
+
+        const btnOpen = document.createElement('a');
+        btnOpen.href = item.url;
+        btnOpen.className = 'btn-action btn-small btn-secondary';
+        btnOpen.target = '_blank';
+        btnOpen.rel = 'noopener';
+        btnOpen.title = 'Abrir';
+        btnOpen.textContent = 'Abrir';
+
+        actionWrap.appendChild(btnDownload);
+        actionWrap.appendChild(btnOpen);
+        tdActions.appendChild(actionWrap);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdZone);
+        tr.appendChild(tdMatch);
+        tr.appendChild(tdSnippet);
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    resultsBox.appendChild(tableWrap);
+}
+
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 // ==========================================
 // 1. LÓGICA DE SUBIDA (BUCLE STRICT)

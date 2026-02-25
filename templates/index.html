@@ -224,6 +224,26 @@
                 </div>
             </form>
         </div>
+
+        {# BUSCADOR #}
+        <div class="section-box">
+            <h3>Buscar archivos</h3>
+            <form id="search-form" style="margin-top: 10px;">
+                <div class="input-group" style="align-items: center;">
+                    <input type="text" id="search-input" placeholder="Buscar por nombre o contenido (mínimo 2 caracteres)..." autocomplete="off">
+                    <select id="search-mode" title="Modo de búsqueda">
+                        <option value="both" selected>Nombre + contenido</option>
+                        <option value="name">Solo nombre</option>
+                        <option value="content">Solo contenido</option>
+                    </select>
+                    <button type="submit" class="btn-action btn-create">Buscar</button>
+                </div>
+            </form>
+            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                Busca en Inbox y catálogo. El modo "Solo nombre" evita inspección de contenido y es más rápido.
+            </small>
+            <div id="search-results" style="display: none; margin-top: 15px;"></div>
+        </div>
         
         {# INBOX #}
         <h3 style="margin-top: 40px;">Bandeja de Entrada (Inbox)</h3>
@@ -309,6 +329,6 @@
     </dialog>
 
     <div id="global-action-menu" class="global-action-menu"></div>
-    <script src="/static/js/main.js?v=3"></script>
+    <script src="/static/js/main.js?v=5"></script>
 </body>
 </html>
