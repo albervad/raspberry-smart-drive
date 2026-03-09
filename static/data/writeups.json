@@ -1,0 +1,175 @@
+[
+  {
+    "id": "htb-facts",
+    "machine": "Facts",
+    "platform": "Hack The Box",
+    "difficulty": "Easy",
+    "date": "2026-02-26",
+    "tags": ["web", "enumeration", "burp-suite", "privilege-escalation", "cve-2025-2304", "ssh"],
+    "summary": "Enumeración de puertos y de la web, descubrimiento de /admin, creación de cuenta y abuso de Chameleon 2.9 (CVE-2025-2304) para elevar privilegios a admin.",
+    "steps": [
+      "Enumeración inicial de puertos y servicios expuestos con nmap.",
+      "Enumeración de directorios en la web y hallazgo de la ruta de login \"/admin\".",
+      "Registro de cuenta en el panel y detección de versión Chameleon 2.9, vulnerable a \"CVE-2025-2304\".",
+      "Escalada de privilegios con \"Burp Suite\" añadiendo el parámetro \"password[role]=admin\" a la petición de cambio de contraseña.",
+      "Acceso con privilegios elevados y extracción de credenciales de \"aws S3\" publicadas en la web.",
+      "Obtención de claves ssh (publica y privada) presentes en un bucket de \"s3\".",
+      "Actualmente en proceso de explotación de las claves ssh para acceso a la máquina."
+    ],
+    "mitigation": "Validar y bloquear parámetros inesperados en backend (mass assignment), reforzar control de roles en servidor, actualizar Chameleon, proteger secretos de S3 y rotar claves comprometidas."
+  },
+  {
+    "id": "htb-broker",
+    "machine": "Broker",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "linux", "web", "enumeration"],
+    "summary": "Máquina completada. Pendiente de documentar el flujo completo de explotación y escalada.",
+    "steps": [
+      "Máquina resuelta anteriormente.",
+      "Pendiente de añadir notas técnicas paso a paso."
+    ],
+    "mitigation": "Pendiente de completar en base a la vía final de compromiso."
+  },
+  {
+    "id": "htb-twomillion",
+    "machine": "TwoMillion",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "api", "enumeration"],
+    "summary": "Máquina completada. Pendiente de documentar detalles técnicos.",
+    "steps": [
+      "Máquina resuelta anteriormente.",
+      "Pendiente de completar writeup técnico."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-keeper",
+    "machine": "Keeper",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "linux", "enumeration"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-analytics",
+    "machine": "Analytics",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-cat-challenge",
+    "machine": "Cat",
+    "platform": "Hack The Box (Challenge)",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "challenge", "web", "offensive-security"],
+    "summary": "Challenge completado. Pendiente de documentación técnica completa.",
+    "steps": [
+      "Challenge resuelto.",
+      "Pendiente de añadir writeup detallado."
+    ],
+    "mitigation": "No aplica directamente (challenge)."
+  },
+  {
+    "id": "htb-codify",
+    "machine": "Codify",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux", "enumeration"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-cozyhosting",
+    "machine": "CozyHosting",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux", "hosting"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-bizness",
+    "machine": "Bizness",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-devvortex",
+    "machine": "Devvortex",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux", "cms"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-surveillance",
+    "machine": "Surveillance",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "web", "linux", "enumeration"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  },
+  {
+    "id": "htb-cap",
+    "machine": "Cap",
+    "platform": "Hack The Box",
+    "difficulty": "N/A",
+    "date": "2026-02-26",
+    "tags": ["htb", "linux", "network", "enumeration"],
+    "summary": "Máquina completada. Pendiente de writeup.",
+    "steps": [
+      "Resolución realizada.",
+      "Documentación pendiente."
+    ],
+    "mitigation": "Pendiente de completar."
+  }
+]

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio / CV | Raspberry Smart Drive</title>
+    <link rel="icon" type="image/png" href="/static/img/icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b1020;
+            --card: rgba(16, 23, 42, 0.75);
+            --card-strong: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --primary: #60a5fa;
+            --primary-strong: #3b82f6;
+            --border: rgba(148, 163, 184, 0.2);
+            --ok: #34d399;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(1200px 500px at 10% -10%, rgba(59, 130, 246, 0.25), transparent 60%),
+                radial-gradient(1000px 500px at 95% 0%, rgba(52, 211, 153, 0.16), transparent 60%),
+                var(--bg);
+            min-height: 100%;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: radial-gradient(rgba(255,255,255,0.2) 0.4px, transparent 0.4px);
+            background-size: 3px 3px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: min(1280px, 94%);
+            margin: 40px auto 70px;
+        }
+
+        .hero {
+            display: grid;
+            gap: 20px;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.65));
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) + 6px);
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: floatIn 0.8s ease-out both;
+            position: relative;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: -40% -20% auto;
+            height: 160px;
+            background: radial-gradient(circle at center, rgba(147, 197, 253, 0.18), transparent 70%);
+            pointer-events: none;
+            animation: heroGlow 8s ease-in-out infinite;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            background: rgba(96, 165, 250, 0.14);
+            color: #bfdbfe;
+            border: 1px solid rgba(96, 165, 250, 0.32);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.7rem, 4vw, 3rem);
+            line-height: 1.15;
+        }
+
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 11px 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #f8fafc;
+        }
+
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.4);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .btn:hover { transform: translateY(-2px); }
+
+        .contact-grid {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            width: 100%;
+        }
+
+        .contact-item {
+            min-width: 0;
+            display: grid;
+            gap: 3px;
+            background: rgba(15, 23, 42, 0.56);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 12px;
+            padding: 11px 12px;
+        }
+
+        .contact-item .label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .contact-item a,
+        .contact-item span {
+            color: #e2e8f0;
+            text-decoration: none;
+            font-size: 0.93rem;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .contact-item a:hover {
+            color: #bfdbfe;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .grid {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+
+        .card {
+            grid-column: span 12;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(18px);
+            opacity: 0;
+            transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.55s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            transition-delay: var(--reveal-delay, 0ms);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            inset: -45%;
+            width: 190%;
+            height: 190%;
+            background: linear-gradient(115deg, transparent 40%, rgba(148, 197, 255, 0.12) 50%, transparent 60%);
+            transform: translateX(-160%);
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            pointer-events: none;
+        }
+
+        .card.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .card:hover {
+            border-color: rgba(96, 165, 250, 0.4);
+            box-shadow: 0 16px 34px rgba(9, 12, 22, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::after {
+            opacity: 0.9;
+            animation: cardSweep 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+        }
+
+        .card:not(:hover)::after {
+            animation: none;
+            transform: translateX(-160%);
+        }
+
+        .card h2 {
+            margin: 0 0 14px;
+            font-size: 1.05rem;
+            color: #f1f5f9;
+        }
+
+        .list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 10px;
+        }
+
+        .list li {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 10px;
+            padding: 11px 12px;
+            color: #cbd5e1;
+            font-size: 0.94rem;
+        }
+
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 999px;
+            padding: 8px 11px;
+            color: #dbeafe;
+            font-size: 0.84rem;
+            font-weight: 600;
+        }
+
+        .stack-layout {
+            display: grid;
+            gap: 10px;
+        }
+
+        .stack-block {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.42);
+            padding: 10px;
+        }
+
+        .stack-block h3 {
+            margin: 0 0 8px;
+            font-size: 0.86rem;
+            letter-spacing: 0.02em;
+            color: #bfdbfe;
+            text-transform: uppercase;
+        }
+
+        .highlight {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 20px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 6px;
+            top: 2px;
+            bottom: 2px;
+            width: 2px;
+            background: linear-gradient(var(--primary), rgba(96, 165, 250, 0.15));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 10px;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -18px;
+            top: 7px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+
+        .timeline-item strong {
+            display: block;
+            color: #f8fafc;
+            margin-bottom: 2px;
+            font-size: 0.92rem;
+        }
+
+        .small {
+            font-size: 0.88rem;
+            color: var(--muted);
+        }
+
+        .ok {
+            color: var(--ok);
+            font-weight: 600;
+        }
+
+        .writeups-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .search-input {
+            flex: 1 1 260px;
+            min-width: 220px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 10px;
+            color: var(--text);
+            padding: 10px 12px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-input:focus {
+            border-color: rgba(96, 165, 250, 0.75);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .writeups-layout {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr;
+            align-items: start;
+        }
+
+        .writeups-list {
+            display: grid;
+            gap: 8px;
+            max-height: 320px;
+            overflow: auto;
+            width: 100%;
+            min-width: 0;
+            padding-right: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(96, 165, 250, 0.7) rgba(15, 23, 42, 0.45);
+        }
+
+        .writeups-list::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .writeups-list::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 999px;
+        }
+
+        .writeups-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(96, 165, 250, 0.9), rgba(59, 130, 246, 0.75));
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.55);
+        }
+
+        .writeups-list::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(147, 197, 253, 0.95), rgba(96, 165, 250, 0.85));
+        }
+
+        .writeup-item {
+            width: 100%;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.5);
+            color: #dbeafe;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .writeup-item:hover {
+            transform: translateY(-1px);
+            border-color: rgba(96, 165, 250, 0.65);
+        }
+
+        .writeup-item.active {
+            border-color: rgba(96, 165, 250, 0.85);
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .writeup-item strong {
+            display: block;
+            color: #f8fafc;
+            margin-bottom: 4px;
+            font-size: 0.93rem;
+        }
+
+        .writeup-meta {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .writeup-detail {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 12px;
+            padding: 14px;
+            min-height: 220px;
+        }
+
+        .writeup-detail h3 {
+            margin: 0 0 6px;
+            color: #f8fafc;
+            font-size: 1rem;
+        }
+
+        .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .detail-steps {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            color: #cbd5e1;
+            display: grid;
+            gap: 6px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .stat-card {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.45);
+        }
+
+        .stat-card strong {
+            display: block;
+            color: #f8fafc;
+            font-size: 1rem;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .project-card {
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 12px;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.45);
+        }
+
+        .project-card h3 {
+            margin: 0 0 6px;
+            font-size: 0.98rem;
+            color: #f8fafc;
+        }
+
+        .project-card ul {
+            margin: 8px 0 0;
+            padding-left: 18px;
+            color: #cbd5e1;
+            display: grid;
+            gap: 4px;
+        }
+
+        .col-7 { grid-column: span 12; }
+        .col-5 { grid-column: span 12; }
+        .col-12 { grid-column: span 12; }
+
+        @media (min-width: 860px) {
+            .col-7 { grid-column: span 7; }
+            .col-5 { grid-column: span 5; }
+            .writeups-layout {
+                grid-template-columns: 0.9fr 1.3fr;
+            }
+            .project-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 940px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(18px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes heroGlow {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+            50% { transform: translateY(14px) scale(1.08); opacity: 1; }
+        }
+
+        @keyframes cardSweep {
+            from { transform: translateX(-160%); }
+            to { transform: translateX(160%); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero, .card, .hero::after, .card::after {
+                animation: none !important;
+                transition: none !important;
+                filter: none !important;
+                transform: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <main class="container">
+       <section class="hero">
+            <span class="badge">🛡️ Offensive Security Portfolio · Pentesting · Vulnerability Research</span>
+            <h1>Alberto Gabriel Vaduva · Seguridad Ofensiva con enfoque práctico y analítico</h1>
+            <p>
+                Estudiante de 3º de Ingeniería Informática (UCM, Madrid) con más de 7 años de práctica autodidacta en desarrollo. 
+                Me especializo en <span class="highlight">ciberseguridad ofensiva</span>: pentesting, análisis de vulnerabilidades, explotación controlada y desarrollo de <i>tooling</i> propio. 
+                Busco una oportunidad <span class="highlight">junior/prácticas</span> para aportar desde el primer día en evaluación técnica, automatización y documentación de hallazgos.
+            </p>
+            <div class="stat-grid">
+                <div class="stat-card"><strong>Excelencia Académica</strong><span class="small">Múltiples Matrículas de Honor (Bachillerato y UCM)</span></div>
+                <div class="stat-card"><strong>Bases Sólidas</strong><span class="small">Programación, Estructuras de Datos y Arquitectura</span></div>
+                <div class="stat-card"><strong>Objetivo eJPTv2</strong><span class="small">Preparación activa. Examen planeado: Verano 2026</span></div>
+                <div class="stat-card"><strong>ES · RO · EN</strong><span class="small">Español/Rumano nativos, Inglés fluido (Objetivo C1)</span></div>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#writeups">Ver Writeups</a>
+                <a class="btn btn-secondary" href="https://www.linkedin.com/in/alberto-gabriel-vaduva-8991923a6" target="_blank" rel="noopener">LinkedIn</a>
+                <a class="btn btn-secondary" href="https://github.com/albervad" target="_blank" rel="noopener">GitHub</a>
+                <a class="btn btn-secondary" href="https://app.hackthebox.com/users/1104864" target="_blank" rel="noopener">Hack The Box</a>
+                <a class="btn btn-secondary" href="#curriculum">Currículum</a>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <span class="label">Email</span>
+                    <a href="mailto:vaduva.albertogabriel@gmail.com">vaduva.albertogabriel@gmail.com</a>
+                </div>
+                <div class="contact-item">
+                    <span class="label">Teléfono</span>
+                    <a href="tel:+34640342981">+34 640 342 981</a>
+                </div>
+                <div class="contact-item">
+                    <span class="label">Ubicación / Disponibilidad</span>
+                    <span>Madrid · Prácticas / Junior</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card col-7 reveal">
+                <h2>Resumen profesional</h2>
+                <p>
+                    Perfil junior orientado a la seguridad ofensiva con un profundo entendimiento de sistemas y desarrollo de software. 
+                    Complemento mi formación universitaria con <span class="highlight">laboratorios prácticos de pentesting, análisis de CVEs y validación de escenarios de explotación</span> en entornos controlados.
+                </p>
+                <div style="height: 14px;"></div>
+                <ul class="list">
+                    <li><span class="highlight">Fundamentos robustos:</span> Matrículas de Honor universitarias en Programación, Estructuras de Datos, Fundamentos de Computadores y Cálculo.</li>
+                    <li><span class="highlight">Enfoque analítico:</span> Capacidad para leer código, entender el comportamiento a bajo nivel e identificar fallos lógicos o de seguridad.</li>
+                    <li><span class="highlight">Metodología práctica:</span> Resolución constante de máquinas, documentación técnica detallada (Writeups) y desarrollo de herramientas propias para automatización.</li>
+                </ul>
+            </article>
+
+            <article class="card col-5 reveal">
+                <h2>Stack técnico por áreas</h2>
+                <p class="small" style="margin-bottom: 10px;">
+                    Capacidades agrupadas para lectura rápida del perfil técnico en entornos de seguridad ofensiva.
+                </p>
+                <div class="stack-layout">
+                    <div class="stack-block">
+                        <h3>Lenguajes</h3>
+                        <div class="chip-group">
+                            <span class="chip">Python</span>
+                            <span class="chip">Java</span>
+                            <span class="chip">C</span>
+                            <span class="chip">C++</span>
+                            <span class="chip">C# (aprendiendo)</span>
+                            <span class="chip">Bash (aprendiendo)</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Herramientas de seguridad ofensiva</h3>
+                        <div class="chip-group">
+                            <span class="chip">Burp Suite</span>
+                            <span class="chip">Wireshark / tcpdump</span>
+                            <span class="chip">ffuf</span>
+                            <span class="chip">Aircrack-ng</span>
+                            <span class="chip">John the Ripper</span>
+                            <span class="chip">Ghidra</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Sistemas y entorno</h3>
+                        <div class="chip-group">
+                            <span class="chip">Linux</span>
+                            <span class="chip">Arch Linux</span>
+                            <span class="chip">Raspberry Pi</span>
+                            <span class="chip">SSH</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Desarrollo y automatización</h3>
+                        <div class="chip-group">
+                            <span class="chip">FastAPI</span>
+                            <span class="chip">Jinja2</span>
+                            <span class="chip">JavaScript</span>
+                            <span class="chip">Git / GitHub</span>
+                            <span class="chip">Godot (aprendiendo)</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article id="curriculum" class="card col-7 reveal">
+                <h2>Currículum</h2>
+                <ul class="list">
+                    <li><span class="highlight">Email:</span> <a href="mailto:vaduva.albertogabriel@gmail.com" style="color:#bfdbfe; overflow-wrap:anywhere; word-break:break-word;">vaduva.albertogabriel@gmail.com</a></li>
+                    <li><span class="highlight">Teléfono:</span> <a href="tel:+34640342981" style="color:#bfdbfe;">+34 640 342 981</a></li>
+                    <li><span class="highlight">Formación:</span> estudiante de 3º de Ingeniería Informática en la Universidad Complutense de Madrid (UCM).</li>
+                    <li><span class="highlight">Inicio técnico:</span> comencé a programar en 2º/3º de la ESO con proyectos personales.</li>
+                    <li><span class="highlight">Especialización:</span> transición clara hacia ciberseguridad ofensiva y pentesting.</li>
+                    <li><span class="highlight">Formación específica:</span> curso de Hack4u para preparación activa de eJPTv2.</li>
+                    <li><span class="highlight">Trayectoria académica:</span> sin repetir cursos ni asignaturas hasta la fecha.</li>
+                    <li><span class="highlight">Matrículas de Honor:</span> reconocimientos en Bachillerato y asignaturas universitarias.</li>
+                    <li><span class="highlight">Disponibilidad:</span> abierto a prácticas y oportunidades de trabajo compatibles con el calendario académico.</li>
+                    <li><span class="highlight">Perfil profesional:</span> <a href="https://www.linkedin.com/in/alberto-gabriel-vaduva-8991923a6" target="_blank" rel="noopener" style="color:#bfdbfe;">linkedin.com/in/alberto-gabriel-vaduva-8991923a6</a></li>
+                    <li><span class="highlight">Perfil HTB:</span> <a href="https://app.hackthebox.com/users/1104864" target="_blank" rel="noopener" style="color:#bfdbfe;">app.hackthebox.com/users/1104864</a></li>
+                </ul>
+            </article>
+
+            <article id="perfil-academico" class="card col-5 reveal">
+                <h2>Perfil académico y personal</h2>
+                <div class="timeline">
+                <div class="timeline-item">
+                        <strong>Excelencia y Constancia Académica</strong>
+                        <span class="small">Historial académico impecable sin asignaturas repetidas. Galardonado con Matrícula de Honor en Bachillerato y en disciplinas core de la Ingeniería Informática (Programación, Estructuras de Datos, Hardware).</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Certificaciones en progreso</strong>
+                        <span class="small">Actualmente cursando itinerarios formativos avanzados (Hack4u) con el objetivo de obtener la certificación eJPTv2 en verano de 2026.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Trabajo colaborativo</strong>
+                        <span class="small">Buena adaptación a trabajo en equipo, especialmente en proyectos técnicos con aprendizaje compartido.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>CVE Research aplicado</strong>
+                        <span class="small">Estudio de CVEs activos y no activos para entender impacto real y, cuando es viable, reproducir pruebas de forma controlada.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Idiomas</strong>
+                        <span class="small">Rumano y español nativos; inglés fluido con objetivo de certificar C1 en verano.</span>
+                    </div>
+                </div>
+            </article>
+
+            <article id="otros-proyectos" class="card col-12 reveal">
+                <h2>Otros proyectos</h2>
+                <p>
+                    Además del laboratorio de ciberseguridad, desarrollo proyectos técnicos que refuerzan automatización,
+                    análisis y pensamiento de seguridad aplicable a entornos reales.
+                </p>
+                <div class="project-grid">
+                    <div class="project-card">
+                        <h3>Coche teledirigido controlado desde PC</h3>
+                        <p class="small">Proyecto de control remoto seguro desde ordenador usando SSH y lógica de mando personalizada.</p>
+                        <ul>
+                            <li>Integración de control remoto en entorno doméstico/lab.</li>
+                            <li>Seguridad básica de acceso con túnel remoto.</li>
+                            <li>Enfoque en fiabilidad de ejecución y respuesta.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <h3>Launcher de aplicaciones para Windows</h3>
+                        <p class="small">Herramienta propia para productividad diaria y centralización de utilidades.</p>
+                        <ul>
+                            <li>Acceso rápido a herramientas y automatizaciones personales.</li>
+                            <li>Organización del entorno para reducir fricción operativa.</li>
+                            <li>Evolución incremental según uso real.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <h3>Análisis de vulnerabilidad lógica y evasión de Firewall (Steam)</h3>
+                        <p class="small">Investigación técnica del flujo de validación de Steam Family y reproducción controlada de un bypass basado en reglas de red.</p>
+                        <ul>
+                            <li>Identificación del punto lógico de validación de estado de usuarios del grupo familiar.</li>
+                            <li>Diseño de prueba controlada para bloquear tráfico crítico y forzar uso simultáneo no previsto.</li>
+                            <li>Implementación de PoC en launcher para replicar el escenario con reglas de firewall reproducibles.</li>
+                            <li>Caso útil como entrenamiento en lógica de negocio, modelado de abuso y validación de mitigaciones.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <h3>Juego en desarrollo (C# + Godot)</h3>
+                        <p class="small">Proyecto colaborativo en GitHub para reforzar arquitectura, gameplay y C# aplicado.</p>
+                        <ul>
+                            <li>Aprendizaje práctico de motor Godot y scripting en C#.</li>
+                            <li>Trabajo colaborativo y reparto de tareas.</li>
+                            <li>Versionado y seguimiento técnico desde repositorio.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <h3>Raspberry Smart Drive y laboratorio de seguridad</h3>
+                        <p class="small">Plataforma base para experimentar con backend, UI y prácticas de seguridad ofensiva/defensiva.</p>
+                        <ul>
+                            <li>Evolución iterativa con foco en utilidad real.</li>
+                            <li>Desarrollo enfocado a seguridad y realización de auditorías constantes.</li>
+                            <li>Uso continuo como entorno de aprendizaje.</li>
+                            <li>Usado como laboratorio de pruebas de seguridad.</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card col-7 reveal">
+                <h2>Fortalezas</h2>
+                <ul class="list">
+                    <li><span class="highlight">Pensamiento ofensivo estructurado:</span> enfoque metódico para enumeración, explotación controlada y documentación.</li>
+                    <li><span class="highlight">Aprendizaje autónomo:</span> incorporación rápida de herramientas y frameworks nuevos.</li>
+                    <li><span class="highlight">Comunicación técnica:</span> traducción de hallazgos técnicos a impacto, riesgo y acciones concretas.</li>
+                    <li><span class="highlight">Constancia:</span> progreso académico y técnico sostenido a largo plazo.</li>
+                </ul>
+            </article>
+
+            <article class="card col-5 reveal">
+                <h2>Objetivo profesional</h2>
+                <p>
+                    Seguir especializándome en seguridad ofensiva, completar certificaciones relevantes y entrar en un entorno
+                    donde pueda aportar en pentesting junior, análisis técnico ofensivo y desarrollo de tooling como soporte operativo.
+                </p>
+                <div style="height: 12px;"></div>
+                <ul class="list">
+                    <li>Certificar nivel C1 de inglés en verano.</li>
+                    <li>Consolidar trayectoria en pentesting y red team junior.</li>
+                    <li>Publicar writeups técnicos de mayor profundidad y PoCs controladas.</li>
+                    <li>Combinar prácticas o trabajo junior con estudios en curso.</li>
+                </ul>
+            </article>
+
+            <article id="writeups" class="card col-12 reveal">
+                <h2>Writeups de ciberseguridad</h2>
+                <div style="height: 14px;"></div>
+                <div class="writeups-toolbar">
+                    <input id="writeup-search" class="search-input" type="text" placeholder="Buscar máquina, plataforma, dificultad o tag..." autocomplete="off">
+                    <span id="writeup-count" class="small">Cargando máquinas...</span>
+                </div>
+                <div class="writeups-layout">
+                    <div id="writeups-list" class="writeups-list"></div>
+                    <div id="writeup-detail" class="writeup-detail">
+                        <p class="small">Selecciona una máquina para mostrar su writeup.</p>
+                    </div>
+                </div>
+            </article>
+
+            <article id="proyecto" class="card col-7 reveal">
+                <h2>Proyecto destacado: Raspberry Pi Smart Drive</h2>
+                <p>
+                    Plataforma de almacenamiento personal que también uso como entorno de laboratorio para auditarme,
+                    practicar pruebas de seguridad y mejorar tanto la parte ofensiva como la robustez del backend.
+                </p>
+                <div style="height: 14px;"></div>
+                <ul class="list">
+                    <li><span class="ok">✔</span> Desarrollo completo de backend y frontend orientado a uso real.</li>
+                    <li><span class="ok">✔</span> Base para pruebas de seguridad en entorno controlado.</li>
+                    <li><span class="ok">✔</span> Funcionalidades de gestión de archivos y búsqueda para escenarios de laboratorio.</li>
+                    <li><span class="ok">✔</span> Despliegue en Raspberry Pi con ejecución persistente y mantenimiento.</li>
+                </ul>
+            </article>
+
+            <article class="card col-5 reveal">
+                <h2>Evolución del proyecto</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Fase 1 · Plataforma funcional</strong>
+                        <span class="small">Subida de archivos, inbox y estructura de catálogo.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Fase 2 · Productividad operativa</strong>
+                        <span class="small">Drag & drop, acciones rápidas y búsqueda por nombre/contenido.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Fase 3 · Laboratorio de seguridad</strong>
+                        <span class="small">Uso del proyecto como base para autoauditoría y mejora de metodología ofensiva.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Próximo paso</strong>
+                        <span class="small">Más máquinas, más writeups y pruebas técnicas documentadas.</span>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script id="writeups-seed" type="application/json">{{ writeups_data | tojson }}</script>
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.16 });
+
+        document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+        document.querySelectorAll('.reveal').forEach((el, index) => {
+            el.style.setProperty('--reveal-delay', `${Math.min(index * 40, 320)}ms`);
+        });
+
+        const writeupState = {
+            all: [],
+            filtered: [],
+            selectedId: null
+        };
+
+        function safeText(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function syncWriteupsListHeight() {
+            const list = document.getElementById('writeups-list');
+            const detail = document.getElementById('writeup-detail');
+            if (!list || !detail) return;
+
+            if (window.innerWidth < 860) {
+                list.style.height = '';
+                list.style.maxHeight = '320px';
+                return;
+            }
+
+            const targetHeight = Math.max(320, detail.offsetHeight || 320);
+            list.style.height = `${targetHeight}px`;
+            list.style.maxHeight = `${targetHeight}px`;
+        }
+
+        function renderWriteupDetail(item) {
+            const detail = document.getElementById('writeup-detail');
+            if (!detail) return;
+
+            if (!item) {
+                detail.innerHTML = '<p class="small">No hay coincidencias para este filtro.</p>';
+                return;
+            }
+
+            const tags = Array.isArray(item.tags) ? item.tags : [];
+            const steps = Array.isArray(item.steps) ? item.steps : [];
+
+            detail.innerHTML = `
+                <h3>${safeText(item.machine)}</h3>
+                <p class="small">${safeText(item.platform)} · ${safeText(item.difficulty)} · ${safeText(item.date)}</p>
+                <div style="height: 8px;"></div>
+                <p>${safeText(item.summary)}</p>
+                <div class="detail-tags">
+                    ${tags.map((tag) => `<span class="chip">${safeText(tag)}</span>`).join('')}
+                </div>
+                <h3 style="margin-top: 6px;">Metodología</h3>
+                <ol class="detail-steps">
+                    ${steps.map((step) => `<li>${safeText(step)}</li>`).join('')}
+                </ol>
+                <h3 style="margin-top: 14px;">Remediación</h3>
+                <p>${safeText(item.mitigation)}</p>
+            `;
+
+            syncWriteupsListHeight();
+        }
+
+        function renderWriteupList() {
+            const list = document.getElementById('writeups-list');
+            const counter = document.getElementById('writeup-count');
+            if (!list || !counter) return;
+
+            counter.textContent = `${writeupState.filtered.length} máquina(s)`;
+
+            if (!writeupState.filtered.length) {
+                list.innerHTML = '<p class="small">No se encontraron máquinas.</p>';
+                renderWriteupDetail(null);
+                syncWriteupsListHeight();
+                return;
+            }
+
+            if (!writeupState.selectedId || !writeupState.filtered.some((w) => w.id === writeupState.selectedId)) {
+                writeupState.selectedId = writeupState.filtered[0].id;
+            }
+
+            list.innerHTML = writeupState.filtered.map((item) => {
+                const active = item.id === writeupState.selectedId ? 'active' : '';
+                return `
+                    <button class="writeup-item ${active}" data-id="${safeText(item.id)}">
+                        <strong>${safeText(item.machine)}</strong>
+                        <span class="writeup-meta">${safeText(item.platform)} · ${safeText(item.difficulty)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const selected = writeupState.filtered.find((w) => w.id === writeupState.selectedId) || null;
+            renderWriteupDetail(selected);
+
+            list.querySelectorAll('.writeup-item').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    writeupState.selectedId = btn.dataset.id;
+                    renderWriteupList();
+                });
+            });
+        }
+
+        function filterWriteups(searchText) {
+            const query = (searchText || '').trim().toLowerCase();
+            if (!query) {
+                writeupState.filtered = [...writeupState.all];
+                renderWriteupList();
+                return;
+            }
+
+            writeupState.filtered = writeupState.all.filter((item) => {
+                const fields = [
+                    item.machine,
+                    item.platform,
+                    item.difficulty,
+                    item.summary,
+                    item.mitigation,
+                    ...(Array.isArray(item.tags) ? item.tags : [])
+                ]
+                    .join(' ')
+                    .toLowerCase();
+
+                return fields.includes(query);
+            });
+
+            renderWriteupList();
+        }
+
+        function initWriteups() {
+            const list = document.getElementById('writeups-list');
+            const detail = document.getElementById('writeup-detail');
+            const input = document.getElementById('writeup-search');
+
+            if (!list || !detail || !input) return;
+
+            try {
+                const seedNode = document.getElementById('writeups-seed');
+                const data = seedNode ? JSON.parse(seedNode.textContent || '[]') : [];
+                const rows = Array.isArray(data) ? data : [];
+
+                writeupState.all = rows
+                    .filter((item) => item && item.id && item.machine)
+                    .map((item) => ({
+                        id: String(item.id),
+                        machine: String(item.machine || ''),
+                        platform: String(item.platform || 'N/A'),
+                        difficulty: String(item.difficulty || 'N/A'),
+                        date: String(item.date || 'Sin fecha'),
+                        tags: Array.isArray(item.tags) ? item.tags : [],
+                        summary: String(item.summary || 'Sin resumen.'),
+                        steps: Array.isArray(item.steps) ? item.steps : [],
+                        mitigation: String(item.mitigation || 'Sin medidas definidas.')
+                    }));
+
+                writeupState.filtered = [...writeupState.all];
+                writeupState.selectedId = writeupState.filtered[0]?.id || null;
+                renderWriteupList();
+            } catch (error) {
+                list.innerHTML = '<p class="small">No se pudo cargar la lista de máquinas.</p>';
+                detail.innerHTML = '<p class="small">Verifica el archivo static/data/writeups.json y su formato JSON.</p>';
+                syncWriteupsListHeight();
+            }
+
+            input.addEventListener('input', (event) => {
+                filterWriteups(event.target.value);
+            });
+
+            window.addEventListener('resize', syncWriteupsListHeight);
+            syncWriteupsListHeight();
+        }
+
+        initWriteups();
+    </script>
+</body>
+</html>

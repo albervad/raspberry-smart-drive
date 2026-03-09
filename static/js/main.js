@@ -4,9 +4,11 @@
  */
 
 document.addEventListener("DOMContentLoaded", function() {
+    initTabs();
     initTreeCounts();
     fetchAndRenderFolders();
     initSearch();
+    initClipboard();
 });
 
 const form = document.getElementById('upload-form');
@@ -14,6 +16,151 @@ const dialog = document.getElementById('moveDialog');
 let archivoActual = ""; 
 let draggedItemPath = null; 
 let draggedItemZone = null;
+
+function initTabs() {
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+    if (!tabButtons.length || !tabPanels.length) return;
+
+    const showTab = (tabName) => {
+        tabButtons.forEach(button => {
+            button.classList.toggle('active', button.dataset.tab === tabName);
+        });
+
+        tabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.id === `tab-${tabName}`);
+        });
+
+        try {
+            localStorage.setItem('drive_active_tab', tabName);
+        } catch (error) {}
+    };
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = button.dataset.tab;
+            if (!tabName) return;
+            showTab(tabName);
+        });
+    });
+
+    let initialTab = tabButtons[0]?.dataset.tab || 'files';
+    try {
+        const saved = localStorage.getItem('drive_active_tab');
+        if (saved && tabButtons.some(button => button.dataset.tab === saved)) {
+            initialTab = saved;
+        }
+    } catch (error) {}
+
+    showTab(initialTab);
+}
+
+function initClipboard() {
+    const textArea = document.getElementById('clipboard-text');
+    const saveBtn = document.getElementById('clipboard-save-btn');
+    const copyBtn = document.getElementById('clipboard-copy-btn');
+    const pasteBtn = document.getElementById('clipboard-paste-btn');
+    const refreshBtn = document.getElementById('clipboard-refresh-btn');
+
+    if (!textArea || !saveBtn || !copyBtn || !pasteBtn || !refreshBtn) return;
+
+    saveBtn.addEventListener('click', guardarPortapapelesCompartido);
+    copyBtn.addEventListener('click', copiarPortapapelesLocal);
+    pasteBtn.addEventListener('click', pegarPortapapelesLocal);
+    refreshBtn.addEventListener('click', cargarPortapapelesCompartido);
+
+    cargarPortapapelesCompartido();
+}
+
+function setClipboardStatus(message, isError = false) {
+    const status = document.getElementById('clipboard-status');
+    if (!status) return;
+    status.textContent = message;
+    status.style.color = isError ? 'var(--danger-color)' : 'var(--text-muted)';
+}
+
+function formatearFechaClipboard(rawDate) {
+    if (!rawDate) return 'Sin actualizaciones todavía.';
+    const date = new Date(rawDate);
+    if (Number.isNaN(date.getTime())) return 'Última actualización: fecha no disponible';
+    return `Última actualización: ${date.toLocaleString()}`;
+}
+
+async function cargarPortapapelesCompartido() {
+    const textArea = document.getElementById('clipboard-text');
+    if (!textArea) return;
+
+    setClipboardStatus('Cargando portapapeles...');
+
+    try {
+        const res = await fetch('/clipboard');
+        if (!res.ok) throw new Error('No se pudo cargar');
+
+        const data = await res.json();
+        textArea.value = data.text || '';
+        setClipboardStatus(formatearFechaClipboard(data.updated_at));
+    } catch (error) {
+        setClipboardStatus('No se pudo cargar el portapapeles compartido.', true);
+    }
+}
+
+async function guardarPortapapelesCompartido() {
+    const textArea = document.getElementById('clipboard-text');
+    if (!textArea) return;
+
+    setClipboardStatus('Guardando...');
+
+    try {
+        const res = await fetch('/clipboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: textArea.value })
+        });
+
+        if (!res.ok) throw new Error('No se pudo guardar');
+
+        const data = await res.json();
+        textArea.value = data.text || '';
+        setClipboardStatus(`${formatearFechaClipboard(data.updated_at)} · Guardado`);
+    } catch (error) {
+        setClipboardStatus('No se pudo guardar el portapapeles compartido.', true);
+    }
+}
+
+async function copiarPortapapelesLocal() {
+    const textArea = document.getElementById('clipboard-text');
+    if (!textArea) return;
+
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        setClipboardStatus('Tu navegador no permite copiar automáticamente.', true);
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(textArea.value || '');
+        setClipboardStatus('Texto copiado al portapapeles local.');
+    } catch (error) {
+        setClipboardStatus('No se pudo copiar al portapapeles local.', true);
+    }
+}
+
+async function pegarPortapapelesLocal() {
+    const textArea = document.getElementById('clipboard-text');
+    if (!textArea) return;
+
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+        setClipboardStatus('Tu navegador no permite pegar automáticamente.', true);
+        return;
+    }
+
+    try {
+        const text = await navigator.clipboard.readText();
+        textArea.value = text;
+        setClipboardStatus('Texto pegado desde portapapeles local. Pulsa Guardar para sincronizar.');
+    } catch (error) {
+        setClipboardStatus('No se pudo leer el portapapeles local.', true);
+    }
+}
 
 function initSearch() {
     const searchForm = document.getElementById('search-form');

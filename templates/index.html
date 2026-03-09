@@ -7,43 +7,92 @@
     <link rel="icon" type="image/png" href="/static/img/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* --- VARIABLES & RESET --- */
         :root {
-            --bg-color: #121212; --card-bg: #1e1e1e;
-            --accent-color: #3b82f6; --accent-hover: #2563eb;
-            --danger-color: #ef4444; --text-main: #e5e7eb; --text-muted: #9ca3af;
-            --border-color: #374151; --radius: 8px;
+            --bg-color: #0b1220;
+            --card-bg: rgba(16, 24, 40, 0.82);
+            --card-bg-strong: #111b2d;
+            --accent-color: #5ca7ff;
+            --accent-hover: #3f91f0;
+            --danger-color: #ef4444;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.22);
+            --radius: 12px;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; line-height: 1.6; }
-        .container { max-width: 900px; margin: 0 auto; }
-        
-        h1 { color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; font-size: 1.5rem; }
-        h3 { font-size: 1.1rem; margin: 0; color: var(--text-main); } /* Margin 0 para alinear con botón */
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(900px 420px at 8% -8%, rgba(92, 167, 255, 0.22), transparent 60%),
+                radial-gradient(900px 480px at 90% -15%, rgba(79, 70, 229, 0.18), transparent 65%),
+                var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 18px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { width: min(1400px, 96vw); margin: 0 auto; }
 
-        /* --- CARDS & SECTIONS --- */
-        .section-box, .upload-zone, dialog { background: var(--card-bg); border-radius: var(--radius); padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .upload-zone { border: 2px dashed var(--border-color); text-align: center; }
+        h1 { color: #dbeafe; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; font-size: 1.5rem; letter-spacing: 0.01em; }
+        h3 { font-size: 1.1rem; margin: 0; color: #f1f5f9; }
+
+        .section-box, .upload-zone, dialog {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 12px 30px rgba(2, 8, 23, 0.3);
+            margin-bottom: 18px;
+            backdrop-filter: blur(6px);
+        }
+        .upload-zone { border: 1px dashed rgba(148, 163, 184, 0.35); text-align: center; }
         .upload-zone:hover { border-color: var(--accent-color); }
 
-        /* --- INPUTS & BUTTONS --- */
-        input[type="text"], select, input[type="file"] { background: #2d2d2d; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: var(--radius); width: 100%; box-sizing: border-box; outline: none; }
-        input[type="text"]:focus, select:focus { border-color: var(--accent-color); }
-        
+        input[type="text"], textarea, select, input[type="file"] {
+            background: var(--card-bg-strong);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent-color); }
+        textarea { resize: vertical; min-height: 130px; }
+
         .input-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .input-group > * { flex: 1 1 100%; min-width: 150px; }
 
-        button, .btn-action { background-color: var(--accent-color); color: white; border: none; padding: 10px 16px; border-radius: var(--radius); font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; font-family: 'Inter', sans-serif; font-size: 0.9rem; white-space: nowrap; }
+        button, .btn-action {
+            background-color: var(--accent-color);
+            color: #f8fafc;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
         button:hover, .btn-action:hover { background-color: var(--accent-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* Botón de crear carpeta (más compacto) */
-        .btn-create { padding: 6px 12px; font-size: 0.9rem; }
-
+        .btn-create { padding: 7px 12px; font-size: 0.9rem; }
         .btn-small { padding: 6px 10px; font-size: 0.85rem; }
         .btn-danger { background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); }
-        .btn-danger:hover { background: var(--danger-color); color: white; }
+        .btn-danger:hover { background: var(--danger-color); color: #fff; }
         .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); }
-        .btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); }
+        .btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); background: transparent; }
         .btn-icon-only { padding: 6px; }
 
         .action-menu { position: relative; }
@@ -53,9 +102,9 @@
             top: 0;
             left: 0;
             min-width: 150px;
-            background: var(--card-bg);
+            background: var(--card-bg-strong);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius);
+            border-radius: 10px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.6);
             padding: 6px;
             display: none;
@@ -69,7 +118,7 @@
             gap: 8px;
             padding: 8px 10px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             background: transparent;
             color: var(--text-main);
             cursor: pointer;
@@ -80,53 +129,82 @@
         .menu-item:hover { background: rgba(255,255,255,0.08); }
         .menu-item.danger { color: var(--danger-color); }
 
-        /* --- ICONOS SVG --- */
         .icon { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
         .btn-small .icon { width: 16px; height: 16px; }
 
-        /* --- TABLES (RESPONSIVE) --- */
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; min-width: 300px; }
-        th, td { padding: 12px 8px; border-bottom: 1px solid #2d2d2d; text-align: left; vertical-align: middle; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid rgba(148, 163, 184, 0.15); text-align: left; vertical-align: middle; }
         th { color: var(--text-muted); font-weight: 500; white-space: nowrap; }
         .table-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
 
-        /* --- TREE VIEW --- */
-        .folder-node { margin-left: 10px; border-left: 1px solid #333; }
-        .folder-summary { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 4px; user-select: none; }
+        .folder-node { margin-left: 10px; border-left: 1px solid rgba(148, 163, 184, 0.2); }
+        .folder-summary { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; border-radius: 8px; user-select: none; }
         .folder-summary:hover { background: rgba(255,255,255,0.05); color: var(--accent-color); }
         summary::-webkit-details-marker { display: none; }
-        .folder-summary.drag-over { background-color: rgba(59, 130, 246, 0.4) !important; border: 1px dashed #3b82f6; }
-        
-        /* Estilo para carpeta seleccionada */
+        .folder-summary.drag-over { background-color: rgba(92, 167, 255, 0.2) !important; border: 1px dashed var(--accent-color); }
+
         .folder-summary.selected {
-            background-color: rgba(59, 130, 246, 0.2);
+            background-color: rgba(92, 167, 255, 0.16);
             border: 1px solid var(--accent-color);
             color: var(--accent-color);
         }
 
         .draggable-file { cursor: grab; }
-        
-        /* --- UTILS --- */
         .flex-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-        .progress-bar { background: var(--accent-color); height: 8px; border-radius: 4px; transition: width 0.3s; }
-        
-        /* --- DIALOG (CENTRADO CORREGIDO) --- */
-        dialog { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;
-            width: 90%; max-width: 450px; 
-            color: var(--text-main); background: var(--card-bg); 
-            border-radius: var(--radius); padding: 20px; 
-            border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+        .progress-bar { background: linear-gradient(90deg, #60a5fa, #3b82f6); height: 8px; border-radius: 4px; transition: width 0.3s; }
+
+        .clipboard-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .clipboard-meta { margin-top: 8px; color: var(--text-muted); font-size: 0.86rem; }
+
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            flex-shrink: 0;
+        }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active {
+            color: #eaf2ff;
+            border-color: rgba(92, 167, 255, 0.7);
+            background: rgba(92, 167, 255, 0.16);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+            width: 90%;
+            max-width: 450px;
+            color: var(--text-main);
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         dialog::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
         dialog label { color: var(--text-muted); display: block; margin-bottom: 5px; }
-        
+
         hr { border: 0; border-top: 1px solid var(--border-color); margin: 30px 0; }
 
-        /* --- MEDIA QUERIES (MÓVIL) --- */
         @media (max-width: 600px) {
             body { padding: 10px; }
+            .container { width: 100%; }
             h1 { font-size: 1.2rem; }
             .section-box, .upload-zone { padding: 12px; }
             td:nth-child(2), th:nth-child(2) { font-size: 0.8rem; }
@@ -200,107 +278,141 @@
     {% endmacro %}
 
     <div class="container">
-        <h1>Raspberry Drive System</h1>
-        
-        {# ESTADO #}
-        <div class="section-box">
-            <div class="flex-row">
-                <span style="color: var(--text-muted); font-weight: 600;">ESTADO ALMACENAMIENTO</span>
-                <span style="font-size: 0.9em;">{{ espacio_usado }} / {{ espacio_libre }}</span>
-            </div>
-            <div style="background: #333; border-radius: 4px; overflow: hidden;"><div class="progress-bar" style="width: {{ porcentaje }}%;"></div></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
+            <h1 style="margin: 0; padding: 0; border-bottom: none;">Raspberry Drive System</h1>
+            <a href="/portfolio" class="btn-action btn-secondary">Portfolio / CV</a>
+        </div>
+        <div class="tabs-nav" role="tablist" aria-label="Navegación principal">
+            <button type="button" class="tab-btn active" data-tab="files">Archivos</button>
+            <button type="button" class="tab-btn" data-tab="search">Buscar</button>
+            <button type="button" class="tab-btn" data-tab="clipboard">Portapapeles</button>
         </div>
 
-        {# SUBIDA #}
-        <div class="upload-zone">
-            <h3>Subir Archivos</h3>
-            <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="files" multiple required>
-                <div style="margin-top: 15px;">
-                    <button type="submit" style="width: 100%; padding: 12px; font-size: 1rem;">
-                        <svg class="icon" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
-                        Subir Archivos
-                    </button>
+        <section id="tab-files" class="tab-panel active">
+            {# ESTADO #}
+            <div class="section-box">
+                <div class="flex-row">
+                    <span style="color: var(--text-muted); font-weight: 600;">ESTADO ALMACENAMIENTO</span>
+                    <span style="font-size: 0.9em;">{{ espacio_usado }} / {{ espacio_libre }}</span>
                 </div>
-            </form>
-        </div>
-
-        {# BUSCADOR #}
-        <div class="section-box">
-            <h3>Buscar archivos</h3>
-            <form id="search-form" style="margin-top: 10px;">
-                <div class="input-group" style="align-items: center;">
-                    <input type="text" id="search-input" placeholder="Buscar por nombre o contenido (mínimo 2 caracteres)..." autocomplete="off">
-                    <select id="search-mode" title="Modo de búsqueda">
-                        <option value="both" selected>Nombre + contenido</option>
-                        <option value="name">Solo nombre</option>
-                        <option value="content">Solo contenido</option>
-                    </select>
-                    <button type="submit" class="btn-action btn-create">Buscar</button>
-                </div>
-            </form>
-            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
-                Busca en Inbox y catálogo. El modo "Solo nombre" evita inspección de contenido y es más rápido.
-            </small>
-            <div id="search-results" style="display: none; margin-top: 15px;"></div>
-        </div>
-        
-        {# INBOX #}
-        <h3 style="margin-top: 40px;">Bandeja de Entrada (Inbox)</h3>
-        <div class="section-box" style="padding: 0; overflow: hidden;">
-            <div class="table-responsive">
-                <table style="margin-top: 0;">
-                    <thead><tr><th style="padding-left: 10px;">Nombre</th><th>Tamaño</th><th style="text-align: right; padding-right: 10px;">Acciones</th></tr></thead>
-                        <tbody>
-                        {% for archivo in archivos_inbox %}
-                        <tr draggable="true" 
-                            class="draggable-file" 
-                            data-filepath="{{ archivo.nombre }}"
-                            data-zone="inbox"    
-                            ondragstart="handleDragStart(event)">
-                            
-                            <td style="padding-left: 10px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ archivo.nombre }}</td>
-                            <td style="color: var(--text-muted); white-space: nowrap;">{{ archivo.tamano }}</td>
-                            <td style="padding-right: 10px;">
-                                <div class="table-actions">
-                                    <a href="/data/inbox/{{ archivo.url_encoded }}" download="{{ archivo.nombre }}" class="btn-action btn-small btn-secondary" title="Descargar">
-                                        <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                                    </a>
-                                    <a href="/data/inbox/{{ archivo.url_encoded }}" target="_blank" rel="noopener" class="btn-action btn-small btn-secondary" title="Abrir">
-                                        <svg class="icon" viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3zM5 5h6v2H7v10h10v-4h2v6H5V5z"/></svg>
-                                    </a>
-                                    <button class="btn-small btn-secondary" onclick="moverArchivo('{{ archivo.nombre }}')">Mover</button>
-                                    <button class="btn-small btn-danger btn-icon-only" onclick="borrarArchivo('{{ archivo.nombre }}')" title="Eliminar">
-                                        <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">Inbox vacío.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div style="background: #333; border-radius: 4px; overflow: hidden;"><div class="progress-bar" style="width: {{ porcentaje }}%;"></div></div>
             </div>
-        </div>
+
+            {# SUBIDA #}
+            <div class="upload-zone">
+                <h3>Subir Archivos</h3>
+                <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+                    <input type="file" name="files" multiple required>
+                    <div style="margin-top: 15px;">
+                        <button type="submit" style="width: 100%; padding: 12px; font-size: 1rem;">
+                            <svg class="icon" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                            Subir Archivos
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {# INBOX #}
+            <h3 style="margin-top: 0; margin-bottom: 12px;">Bandeja de Entrada (Inbox)</h3>
+            <div class="section-box" style="padding: 0; overflow: hidden; margin-bottom: 18px;">
+                <div class="table-responsive">
+                    <table style="margin-top: 0;">
+                        <thead><tr><th style="padding-left: 10px;">Nombre</th><th>Tamaño</th><th style="text-align: right; padding-right: 10px;">Acciones</th></tr></thead>
+                            <tbody>
+                            {% for archivo in archivos_inbox %}
+                            <tr draggable="true" 
+                                class="draggable-file" 
+                                data-filepath="{{ archivo.nombre }}"
+                                data-zone="inbox"    
+                                ondragstart="handleDragStart(event)">
+                                
+                                <td style="padding-left: 10px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ archivo.nombre }}</td>
+                                <td style="color: var(--text-muted); white-space: nowrap;">{{ archivo.tamano }}</td>
+                                <td style="padding-right: 10px;">
+                                    <div class="table-actions">
+                                        <a href="/data/inbox/{{ archivo.url_encoded }}" download="{{ archivo.nombre }}" class="btn-action btn-small btn-secondary" title="Descargar">
+                                            <svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                                        </a>
+                                        <a href="/data/inbox/{{ archivo.url_encoded }}" target="_blank" rel="noopener" class="btn-action btn-small btn-secondary" title="Abrir">
+                                            <svg class="icon" viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3zM5 5h6v2H7v10h10v-4h2v6H5V5z"/></svg>
+                                        </a>
+                                        <button class="btn-small btn-secondary" onclick="moverArchivo('{{ archivo.nombre }}')">Mover</button>
+                                        <button class="btn-small btn-danger btn-icon-only" onclick="borrarArchivo('{{ archivo.nombre }}')" title="Eliminar">
+                                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" style="text-align:center; padding: 30px; color: var(--text-muted);">Inbox vacío.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# BOTONERA Y ÁRBOL #}
+            <div class="flex-row" style="align-items: center; margin-top: 0; margin-bottom: 10px;">
+                <h3>Archivos Catalogados</h3>
+                <button onclick="crearCarpetaMaestra()" class="btn-action btn-create">
+                    <svg class="icon" viewBox="0 0 24 24" style="margin-right:5px; width: 18px; height: 18px;"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                    Nueva Carpeta
+                </button>
+            </div>
+
+            <div id="selection-info" style="margin-bottom: 10px; font-size: 0.9em; color: var(--text-muted);">
+                Destino: <strong id="selected-folder-name" style="color: white;">Raíz (/files/)</strong>
+            </div>
+
+            <div id="file-tree-root" class="section-box" style="margin-bottom: 0;">
+                {% for carpeta in arbol_archivos %} {{ render_carpeta(carpeta) }} {% else %} <p style="text-align: center; color: var(--text-muted);">No hay carpetas catalogadas.</p> {% endfor %}
+            </div>
+        </section>
+
+        <section id="tab-clipboard" class="tab-panel">
+            {# PORTAPAPELES #}
+            <div class="section-box" style="margin-bottom: 0;">
+                <div class="flex-row" style="margin-bottom: 8px;">
+                    <h3>Portapapeles compartido</h3>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Sincroniza texto entre dispositivos</span>
+                </div>
+                <textarea id="clipboard-text" maxlength="20000" placeholder="Pega aquí texto, comandos, links o notas para usarlos en otro dispositivo..."></textarea>
+                <div class="clipboard-toolbar">
+                    <button type="button" id="clipboard-save-btn" class="btn-action">Guardar</button>
+                    <button type="button" id="clipboard-copy-btn" class="btn-secondary">Copiar local</button>
+                    <button type="button" id="clipboard-paste-btn" class="btn-secondary">Pegar local</button>
+                    <button type="button" id="clipboard-refresh-btn" class="btn-secondary">Actualizar</button>
+                </div>
+                <div id="clipboard-status" class="clipboard-meta">Cargando portapapeles...</div>
+            </div>
+        </section>
+
+        <section id="tab-search" class="tab-panel">
+            {# BUSCADOR #}
+            <div class="section-box" style="margin-bottom: 0;">
+                <h3>Buscar archivos</h3>
+                <form id="search-form" style="margin-top: 10px;">
+                    <div class="input-group" style="align-items: center;">
+                        <input type="text" id="search-input" placeholder="Buscar por nombre o contenido (mínimo 2 caracteres)..." autocomplete="off">
+                        <select id="search-mode" title="Modo de búsqueda">
+                            <option value="both" selected>Nombre + contenido</option>
+                            <option value="name">Solo nombre</option>
+                            <option value="content">Solo contenido</option>
+                        </select>
+                        <button type="submit" class="btn-action btn-create">Buscar</button>
+                    </div>
+                </form>
+                <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                    Busca en Inbox y catálogo. El modo "Solo nombre" evita inspección de contenido y es más rápido.
+                </small>
+                <div id="search-results" style="display: none; margin-top: 15px;"></div>
+            </div>
+        </section>
 
         <hr>
-        
-        {# BOTONERA Y ÁRBOL #}
-        <div class="flex-row" style="align-items: center; margin-top: 30px; margin-bottom: 10px;">
-            <h3>Archivos Catalogados</h3>
-            <button onclick="crearCarpetaMaestra()" class="btn-action btn-create">
-                <svg class="icon" viewBox="0 0 24 24" style="margin-right:5px; width: 18px; height: 18px;"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-                Nueva Carpeta
-            </button>
-        </div>
 
-        <div id="selection-info" style="margin-bottom: 10px; font-size: 0.9em; color: var(--text-muted);">
-            Destino: <strong id="selected-folder-name" style="color: white;">Raíz (/files/)</strong>
-        </div>
-
-        <div id="file-tree-root" class="section-box">
-            {% for carpeta in arbol_archivos %} {{ render_carpeta(carpeta) }} {% else %} <p style="text-align: center; color: var(--text-muted);">No hay carpetas catalogadas.</p> {% endfor %}
+        <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">
+            Vista simplificada con pestañas para reducir carga visual.
         </div>
 
     </div>
@@ -329,6 +441,6 @@
     </dialog>
 
     <div id="global-action-menu" class="global-action-menu"></div>
-    <script src="/static/js/main.js?v=5"></script>
+    <script src="/static/js/main.js?v=8"></script>
 </body>
 </html>
