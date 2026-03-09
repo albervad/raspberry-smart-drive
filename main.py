@@ -5,13 +5,12 @@ import asyncio
 from contextlib import asynccontextmanager
 from urllib.parse import unquote
 
-from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Form, BackgroundTasks
+from fastapi import FastAPI, APIRouter, Request, File, UploadFile, HTTPException, Form, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from smartdrive.config import (
-    BASE_MOUNT,
     INBOX_DIR,
     FILES_DIR,
     WRITEUPS_MAX_FILE_BYTES,
@@ -52,33 +51,22 @@ async def lifespan(app: FastAPI):
     print("--> Apagando Smart Drive...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
 
-if os.path.exists(BASE_MOUNT):
-    app.mount("/data", StaticFiles(directory=BASE_MOUNT), name="datos")
+app.mount("/drive/inbox", StaticFiles(directory=INBOX_DIR, check_dir=False), name="drive-inbox")
+app.mount("/drive/files", StaticFiles(directory=FILES_DIR, check_dir=False), name="drive-files")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+drive_router = APIRouter(prefix="/drive")
 
 
-@app.get("/")
-def home(request: Request):
-    used, free, percent = obtener_uso_disco()
-    inbox_files = listar_archivos_inbox()
-    tree = obtener_arbol_recursivo(FILES_DIR)
-
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "espacio_usado": used,
-        "espacio_libre": free,
-        "porcentaje": percent,
-        "archivos_inbox": inbox_files,
-        "arbol_archivos": tree["subcarpetas"]
-    })
-
-
-@app.get("/portfolio")
-def portfolio(request: Request):
+def render_portfolio_page(request: Request):
     writeups_path = os.path.join(os.path.dirname(__file__), "static", "data", "writeups.json")
     writeups_data = []
 
@@ -98,7 +86,33 @@ def portfolio(request: Request):
     })
 
 
-@app.get("/search")
+@app.get("/")
+def portfolio_home(request: Request):
+    return render_portfolio_page(request)
+
+
+@app.get("/portfolio")
+def portfolio_alias(request: Request):
+    return render_portfolio_page(request)
+
+
+@drive_router.get("/")
+def drive_home(request: Request):
+    used, free, percent = obtener_uso_disco()
+    inbox_files = listar_archivos_inbox()
+    tree = obtener_arbol_recursivo(FILES_DIR)
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "espacio_usado": used,
+        "espacio_libre": free,
+        "porcentaje": percent,
+        "archivos_inbox": inbox_files,
+        "arbol_archivos": tree["subcarpetas"]
+    })
+
+
+@drive_router.get("/search")
 def search_files(q: str = "", mode: str = "both"):
     query = q.strip()
     search_mode = mode.strip().lower()
@@ -114,7 +128,7 @@ def search_files(q: str = "", mode: str = "both"):
     return {"results": results, "total": len(results)}
 
 
-@app.delete("/delete/{zone}/{filepath:path}")
+@drive_router.delete("/delete/{zone}/{filepath:path}")
 def delete_item(zone: str, filepath: str):
     if zone == "inbox":
         base_dir = INBOX_DIR
@@ -139,7 +153,7 @@ def delete_item(zone: str, filepath: str):
         raise HTTPException(status_code=500, detail=f"Error al borrar: {str(e)}")
 
 
-@app.get("/upload_status")
+@drive_router.get("/upload_status")
 def get_upload_status(filename: str):
     filename = os.path.basename(filename)
     ruta_parcial = sanitizar_ruta_entrada(f"{filename}.part", INBOX_DIR)
@@ -149,7 +163,7 @@ def get_upload_status(filename: str):
     return {"offset": 0}
 
 
-@app.post("/upload_chunk")
+@drive_router.post("/upload_chunk")
 def upload_chunk(
     file: UploadFile = File(...),
     filename: str = Form(...),
@@ -169,7 +183,7 @@ def upload_chunk(
         file.file.close()
 
 
-@app.post("/upload_finish")
+@drive_router.post("/upload_finish")
 def finish_upload(
     filename: str = Form(...),
     action: str = Form("check")
@@ -198,7 +212,7 @@ def finish_upload(
         raise HTTPException(status_code=500, detail=f"Error al finalizar: {str(e)}")
 
 
-@app.post("/create-folder")
+@drive_router.post("/create-folder")
 def create_folder(folder: FolderSchema):
     try:
         new_path = sanitizar_ruta_entrada(folder.folder_name, FILES_DIR)
@@ -210,12 +224,12 @@ def create_folder(folder: FolderSchema):
         return {"error": str(e)}
 
 
-@app.get("/all-folders")
+@drive_router.get("/all-folders")
 def get_all_folders():
     return {"folders": obtener_lista_plana_carpetas(FILES_DIR)}
 
 
-@app.get("/scan-folders/{filename}")
+@drive_router.get("/scan-folders/{filename}")
 def scan_folders(filename: str):
     folders = obtener_lista_plana_carpetas(FILES_DIR)
 
@@ -234,7 +248,7 @@ def scan_folders(filename: str):
     return {"folders": folders, "suggested": sugerencia}
 
 
-@app.post("/move")
+@drive_router.post("/move")
 async def move_file(data: MoveSchema):
     try:
         source_clean = unquote(data.source_path)
@@ -271,7 +285,7 @@ async def move_file(data: MoveSchema):
         return {"error": f"Error al mover: {str(e)}"}
 
 
-@app.post("/rename")
+@drive_router.post("/rename")
 def rename_item(data: RenameSchema):
     try:
         if data.zone not in ["catalog", "folder"]:
@@ -315,12 +329,12 @@ def rename_item(data: RenameSchema):
         raise HTTPException(status_code=500, detail=f"Error al renombrar: {str(e)}")
 
 
-@app.get("/clipboard")
+@drive_router.get("/clipboard")
 def get_shared_clipboard():
     return leer_portapapeles_compartido()
 
 
-@app.post("/clipboard")
+@drive_router.post("/clipboard")
 def set_shared_clipboard(payload: ClipboardSchema):
     try:
         saved = guardar_portapapeles_compartido(payload.text)
@@ -329,7 +343,7 @@ def set_shared_clipboard(payload: ClipboardSchema):
         raise HTTPException(status_code=500, detail=f"No se pudo guardar el portapapeles: {str(e)}")
 
 
-@app.delete("/delete-folder/{path:path}")
+@drive_router.delete("/delete-folder/{path:path}")
 def delete_folder(path: str):
     try:
         clean_path = unquote(path)
@@ -352,7 +366,7 @@ def delete_folder(path: str):
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@app.get("/download-folder/{path:path}")
+@drive_router.get("/download-folder/{path:path}")
 def download_folder_zip(path: str, background_tasks: BackgroundTasks):
     try:
         clean_path = unquote(path)
@@ -374,10 +388,13 @@ def download_folder_zip(path: str, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail="Error creando ZIP")
 
 
-@app.get("/tree-html")
+@drive_router.get("/tree-html")
 def get_tree_html(request: Request):
     tree = obtener_arbol_recursivo(FILES_DIR)
     return templates.TemplateResponse("tree_fragment.html", {
         "request": request,
         "arbol_archivos": tree["subcarpetas"]
     })
+
+
+app.include_router(drive_router)

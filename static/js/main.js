@@ -13,9 +13,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
 const form = document.getElementById('upload-form');
 const dialog = document.getElementById('moveDialog');
+const DRIVE_API_BASE = '/drive';
 let archivoActual = ""; 
 let draggedItemPath = null; 
 let draggedItemZone = null;
+
+function apiPath(path) {
+    const base = DRIVE_API_BASE.replace(/\/+$/, '');
+    if (!path) {
+        return base || '/';
+    }
+    const normalizedPath = String(path).replace(/^\/+/, '');
+    return `${base}/${normalizedPath}`;
+}
 
 function initTabs() {
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
@@ -93,7 +103,7 @@ async function cargarPortapapelesCompartido() {
     setClipboardStatus('Cargando portapapeles...');
 
     try {
-        const res = await fetch('/clipboard');
+        const res = await fetch(apiPath('/clipboard'));
         if (!res.ok) throw new Error('No se pudo cargar');
 
         const data = await res.json();
@@ -111,7 +121,7 @@ async function guardarPortapapelesCompartido() {
     setClipboardStatus('Guardando...');
 
     try {
-        const res = await fetch('/clipboard', {
+        const res = await fetch(apiPath('/clipboard'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: textArea.value })
@@ -191,7 +201,7 @@ async function ejecutarBusqueda(query, mode = 'both') {
     resultsBox.innerHTML = `<p style="margin: 0; color: var(--text-muted);">Buscando...</p>`;
 
     try {
-        const res = await fetch(`/search?q=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`);
+        const res = await fetch(`${apiPath('/search')}?q=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`);
         if (!res.ok) throw new Error('Error de búsqueda');
 
         const data = await res.json();
@@ -373,7 +383,7 @@ async function uploadSingleFile(file) {
     let offset = 0;
     if (file.size > 50 * 1024 * 1024) { 
         try {
-            const resCheck = await fetch(`/upload_status?filename=${encodeURIComponent(file.name)}`);
+            const resCheck = await fetch(`${apiPath('/upload_status')}?filename=${encodeURIComponent(file.name)}`);
             if (resCheck.ok) {
                 const dataCheck = await resCheck.json();
                 offset = dataCheck.offset;
@@ -390,7 +400,7 @@ async function uploadSingleFile(file) {
         formData.append("chunk_offset", offset);
 
         try {
-            const res = await fetch("/upload_chunk", { method: "POST", body: formData });
+            const res = await fetch(apiPath('/upload_chunk'), { method: "POST", body: formData });
             if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
             
             offset += chunk.size;
@@ -415,7 +425,7 @@ async function finalizarSubida(filename, action = 'check') {
     formFinish.append("filename", filename);
     formFinish.append("action", action); 
 
-    const res = await fetch("/upload_finish", { method: "POST", body: formFinish });
+    const res = await fetch(apiPath('/upload_finish'), { method: "POST", body: formFinish });
 
     if (res.status === 409) {
         return finalizarSubida(filename, 'rename'); // Auto-rename en colas
@@ -454,7 +464,7 @@ async function fetchAndRenderFolders() {
     const select = document.getElementById('parentFolderSelect');
     if (!select) return; 
     try {
-        const res = await fetch('/all-folders');
+        const res = await fetch(apiPath('/all-folders'));
         const data = await res.json();
         formatAndRenderFolders(select, data.folders);
     } catch (error) { select.innerHTML = "<option value='.'>Error al cargar.</option>"; }
@@ -495,7 +505,7 @@ async function recargarArbol() {
             if (path) openPaths.add(path);
         });
 
-        const res = await fetch('/tree-html'); // Usamos el endpoint fragmentado
+        const res = await fetch(apiPath('/tree-html')); // Usamos el endpoint fragmentado
         if (!res.ok) throw new Error("Error fetching tree fragment");
         
         const html = await res.text();
@@ -526,7 +536,7 @@ window.confirmarMover = async function() {
     if (!destino || destino.includes("--")) return alert("Destino inválido");
     
     try {
-        const res = await fetch('/move', { 
+        const res = await fetch(apiPath('/move'), { 
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify({ source_path: archivoActual, source_zone: 'inbox', destination_folder: destino }) 
@@ -554,7 +564,7 @@ window.handleDrop = async function(event) {
     if (!destinationFolder) destinationFolder = "."; 
     
     try {
-        const res = await fetch('/move', {
+        const res = await fetch(apiPath('/move'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ source_path: draggedItemPath, source_zone: draggedItemZone, destination_folder: destinationFolder }) 
@@ -607,8 +617,8 @@ window.openActionMenu = function(event, triggerBtn) {
             actions.push({ label: 'Borrar', danger: true, handler: () => borrarCarpeta(itemPath) });
         }
     } else if (menuType === 'catalog-file') {
-        actions.push({ label: 'Descargar', danger: false, handler: () => descargarArchivo(`/data/files/${itemPath}`) });
-        actions.push({ label: 'Abrir', danger: false, handler: () => abrirArchivo(`/data/files/${itemPath}`) });
+        actions.push({ label: 'Descargar', danger: false, handler: () => descargarArchivo(`/drive/files/${itemPath}`) });
+        actions.push({ label: 'Abrir', danger: false, handler: () => abrirArchivo(`/drive/files/${itemPath}`) });
         actions.push({ label: 'Renombrar', danger: false, handler: () => renombrarCatalogado(itemPath) });
         actions.push({ label: 'Borrar', danger: true, handler: () => borrarCatalogado(itemPath) });
     }
@@ -672,7 +682,7 @@ function positionGlobalMenu(triggerBtn, menu) {
 
 async function ejecutarBorrado(zona, ruta) {
     try {
-        const res = await fetch(`/delete/${zona}/${encodeURIComponent(ruta)}`, { method: 'DELETE' });
+        const res = await fetch(`${apiPath('/delete')}/${zona}/${encodeURIComponent(ruta)}`, { method: 'DELETE' });
         if (res.ok) {
             if (zona === 'inbox') {
                 const row = document.querySelector(`tr[data-filepath="${CSS.escape(ruta)}"][data-zone="inbox"]`);
@@ -705,7 +715,7 @@ window.crearCarpetaMaestra = async function() {
     if (!nombre) return;
     const fullPath = currentSelectedFolder === "." ? nombre : `${currentSelectedFolder}/${nombre}`;
     try {
-        const res = await fetch('/create-folder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: fullPath}) });
+        const res = await fetch(apiPath('/create-folder'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: fullPath}) });
         if (res.ok) { 
             await recargarArbol();
             currentSelectedFolder = ".";
@@ -717,7 +727,7 @@ window.crearCarpetaMaestra = async function() {
 window.borrarCarpeta = async function(path) {
     if (!confirm(`¿Borrar carpeta vacía '${path}'?`)) return;
     try {
-        const res = await fetch(`/delete-folder/${encodeURIComponent(path)}`, { method: 'DELETE' });
+        const res = await fetch(`${apiPath('/delete-folder')}/${encodeURIComponent(path)}`, { method: 'DELETE' });
         if (res.ok) {
             await recargarArbol();
             currentSelectedFolder = ".";
@@ -729,7 +739,7 @@ window.borrarCarpeta = async function(path) {
 };
 
 window.descargarZip = function(path) {
-    window.open(`/download-folder/${encodeURIComponent(path)}`, '_blank');
+    window.open(`${apiPath('/download-folder')}/${encodeURIComponent(path)}`, '_blank');
 };
 
 window.descargarArchivo = function(url) {
@@ -752,7 +762,7 @@ window.renombrarCarpeta = async function(path) {
     if (!nuevoNombre || nuevoNombre === nombreActual) return;
 
     try {
-        const res = await fetch('/rename', {
+        const res = await fetch(apiPath('/rename'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ zone: 'folder', item_path: path, new_name: nuevoNombre })
@@ -780,7 +790,7 @@ window.renombrarCatalogado = async function(rutaCodificada) {
     if (!nuevoNombre || nuevoNombre === nombreActual) return;
 
     try {
-        const res = await fetch('/rename', {
+        const res = await fetch(apiPath('/rename'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ zone: 'catalog', item_path: ruta, new_name: nuevoNombre })
@@ -827,14 +837,14 @@ window.addEventListener('scroll', function() {
 window.crearCarpeta = async function() {
     const nombre = document.getElementById('newFolderInput').value;
     if (!nombre) return;
-    const res = await fetch('/create-folder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: nombre}) });
+    const res = await fetch(apiPath('/create-folder'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({folder_name: nombre}) });
     if (res.ok) { alert("Carpeta creada"); document.getElementById('newFolderInput').value = ""; window.moverArchivo(archivoActual); }
 };
 
 window.moverArchivo = async function(nombre) {
     archivoActual = nombre; 
     document.getElementById('modalFilename').innerText = nombre;
-    const res = await fetch('/scan-folders/' + encodeURIComponent(nombre)); 
+    const res = await fetch(apiPath('/scan-folders/' + encodeURIComponent(nombre))); 
     const data = await res.json();
     const select = document.getElementById('folderSelect'); 
     if (data.folders.length === 0) { select.innerHTML = ""; select.add(new Option("-- No hay carpetas --")); } 

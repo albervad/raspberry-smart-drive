@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # ==========================================
 # INSTALADOR RASPBERRY PI SMART DRIVE v3
 # ==========================================
@@ -93,8 +95,13 @@ else
 fi
 
 echo "Instalando librerías..."
-# Ejecutamos pip dentro del venv
-su - $REAL_USER -c "cd $CURRENT_DIR && source venv/bin/activate && pip install --upgrade pip && pip install fastapi uvicorn python-multipart jinja2 natsort aiofiles pypdf"
+if [ ! -f "$CURRENT_DIR/requirements.txt" ]; then
+    echo -e "${RED}No se encontró requirements.txt en $CURRENT_DIR${NC}"
+    exit 1
+fi
+
+# Ejecutamos pip dentro del venv usando requirements.txt
+su - "$REAL_USER" -c "cd \"$CURRENT_DIR\" && . venv/bin/activate && python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
 
 # ---------------------------------------------------------
 # 5. CREAR SERVICIO SYSTEMD (AUTO-ARRANQUE)

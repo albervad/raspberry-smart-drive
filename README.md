@@ -15,6 +15,8 @@ Construir un servicio de archivos autohospedado que sea útil en casa/lab y, al 
 
 ## 🧩 Funcionalidades principales
 
+- Portfolio público en `/` (alias legacy: `/portfolio`).
+- Drive operativo bajo `/drive`.
 - Subida de archivos por chunks con reintentos y cierre controlado.
 - Inbox + catálogo en árbol de carpetas.
 - Operaciones de archivo/carpeta: mover, renombrar, borrar, descargar y abrir.
@@ -49,15 +51,35 @@ Construir un servicio de archivos autohospedado que sea útil en casa/lab y, al 
 - Ejecución en `systemd` con reinicio automático.
 - Limpieza programada de archivos temporales `.part` por `cron`.
 
+### 6) Segmentación de superficie expuesta
+
+- Zona funcional del Drive concentrada en `/drive`.
+- Endpoints de documentación FastAPI deshabilitados: `/docs`, `/redoc`, `/openapi.json`.
+- Assets estáticos de frontend en `/static`.
+
 ## ⚠️ Riesgos conocidos / límites actuales
 
 - No incluye autenticación/autorización nativa en la app web.
 - No hay registro de auditoría completo de acciones (quién hizo qué y cuándo).
 - No hay antimalware ni DLP en subidas.
+- Riesgo de **ZIP bomb / compresión abusiva**: no existe una defensa específica para detectar archivos comprimidos maliciosos (incluyendo documentos empaquetados como `.docx/.odt` durante extracción de contenido o cargas diseñadas para agotar CPU/RAM/disco).
 
 Esto se mitiga recomendando despliegue detrás de una capa segura de acceso.
 
 ## 🌐 Exposición segura (recomendado)
+
+### Cloudflare WAF (producción actual)
+
+La política WAF está configurada para bloquear rutas no permitidas y solo dejar pasar rutas conocidas:
+
+- `/`
+- `/portfolio`
+- `/static/`
+- `/drive`
+- `/favicon.ico`
+- `/cdn-cgi/` (login/challenge de Cloudflare)
+
+Recomendación: mantener esta allowlist y revisar cada cambio de rutas antes de publicar nuevas versiones.
 
 ### Opción A: Cloudflare Zero Trust (Tunnel)
 
@@ -99,6 +121,8 @@ Esto se mitiga recomendando despliegue detrás de una capa segura de acceso.
    ```
 
 El instalador configura dependencias, entorno virtual, carpetas de datos, servicio `smartdrive` y limpieza diaria de temporales.
+
+> Nota: el instalador usa `requirements.txt` para instalar dependencias Python.
 
 ## ▶️ Ejecución
 
