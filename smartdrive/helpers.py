@@ -403,7 +403,7 @@ def buscar_archivos(query: str, mode: str = "both"):
                     continue
 
                 url_encoded = quote(ruta_relativa)
-                url_abrir = f"/data/inbox/{url_encoded}" if zona == "inbox" else f"/data/files/{url_encoded}"
+                url_abrir = f"/drive/inbox/{url_encoded}" if zona == "inbox" else f"/drive/files/{url_encoded}"
 
                 tipo_coincidencia = []
                 if coincide_nombre:
