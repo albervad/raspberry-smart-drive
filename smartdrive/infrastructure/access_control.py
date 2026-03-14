@@ -464,18 +464,22 @@ def clear_action_events(visitor_id: str | None = None) -> int:
         events = events_data.setdefault("events", [])
         original_count = len(events)
 
+        visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
+        visitors = visitors_data.setdefault("visitors", {})
+
         if visitor_id:
             events = [event for event in events if event.get("visitor_id") != visitor_id]
-            # Also reset the request/action counters stored on the visitor record
-            visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
-            visitors = visitors_data.setdefault("visitors", {})
             if visitor_id in visitors:
                 visitors[visitor_id]["requests_count"] = 0
                 visitors[visitor_id]["actions_count"] = 0
-                visitors_data["visitors"] = visitors
-                _write_json(VISITOR_STORE_PATH, visitors_data)
         else:
             events = []
+            for vid in visitors:
+                visitors[vid]["requests_count"] = 0
+                visitors[vid]["actions_count"] = 0
+
+        visitors_data["visitors"] = visitors
+        _write_json(VISITOR_STORE_PATH, visitors_data)
 
         events_data["events"] = events
         _write_json(EVENT_STORE_PATH, events_data)
