@@ -28,6 +28,29 @@ function apiPath(path) {
     return `${base}/${normalizedPath}`;
 }
 
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    const token = meta?.getAttribute('content') || '';
+    return token.trim();
+}
+
+const rawFetch = window.fetch.bind(window);
+window.fetch = function(resource, options = {}) {
+    const requestOptions = { ...options };
+    const method = String(requestOptions.method || 'GET').toUpperCase();
+
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+        const csrfToken = getCsrfToken();
+        if (csrfToken) {
+            const headers = new Headers(requestOptions.headers || {});
+            headers.set('X-CSRF-Token', csrfToken);
+            requestOptions.headers = headers;
+        }
+    }
+
+    return rawFetch(resource, requestOptions);
+};
+
 function initStorageUsageBar() {
     const usageBar = document.getElementById('storage-usage-bar');
     if (!usageBar) return;
@@ -415,7 +438,27 @@ async function uploadSingleFile(file) {
 
         try {
             const res = await fetch(apiPath('/upload_chunk'), { method: "POST", body: formData });
-            if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+            if (!res.ok) {
+                if (res.status === 409) {
+                    let payload = null;
+                    try {
+                        payload = await res.json();
+                    } catch (error) {}
+
+                    const expectedOffset = Number(payload?.detail?.expected_offset);
+                    if (Number.isFinite(expectedOffset) && expectedOffset >= 0) {
+                        offset = expectedOffset;
+                        const percent = file.size > 0
+                            ? Math.min((offset / file.size) * 100, 99)
+                            : 0;
+                        progressBar.style.width = percent + "%";
+                        statusText.innerText = `Re-sincronizando ${file.name}... ${Math.round(percent)}%`;
+                        continue;
+                    }
+                }
+
+                throw new Error(`Error HTTP ${res.status}`);
+            }
             
             offset += chunk.size;
             
@@ -691,11 +734,21 @@ function positionGlobalMenu(triggerBtn, menu) {
 }
 
 async function runDelete(zone, path) {
+    const rawPath = String(path ?? '');
+    let decodedPath = rawPath;
     try {
-        const res = await fetch(`${apiPath('/delete')}/${zone}/${encodeURIComponent(path)}`, { method: 'DELETE' });
+        decodedPath = decodeURIComponent(rawPath);
+    } catch (e) {
+        decodedPath = rawPath;
+    }
+
+    const encodedPath = encodeURIComponent(decodedPath);
+
+    try {
+        const res = await fetch(`${apiPath('/delete')}/${zone}/${encodedPath}`, { method: 'DELETE' });
         if (res.ok) {
             if (zone === 'inbox') {
-                const row = document.querySelector(`tr[data-filepath="${CSS.escape(path)}"][data-zone="inbox"]`);
+                const row = document.querySelector(`tr[data-filepath="${CSS.escape(decodedPath)}"][data-zone="inbox"]`);
                 removeInboxRow(row);
             } else { await reloadTree(); }
         } else { const data = await res.json(); alert("Error: " + data.detail); }

@@ -2,10 +2,13 @@ import asyncio
 import hashlib
 import json
 import os
+import secrets
 import threading
 import uuid
 from datetime import datetime, timedelta, timezone
+from ipaddress import ip_address
 from typing import Any
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
@@ -17,12 +20,17 @@ from smartdrive.infrastructure.settings import (
     SMARTDRIVE_AUDIT_RECENT_LIMIT,
     SMARTDRIVE_NEW_VISITOR_WINDOW_HOURS,
     SMARTDRIVE_OWNER_IPS,
+    SMARTDRIVE_TRUST_PROXY_HEADERS,
+    SMARTDRIVE_TRUSTED_PROXY_IPS,
 )
 
 
 logger = get_logger("access_control")
 
 VISITOR_COOKIE_NAME = "sd_vid"
+CSRF_COOKIE_NAME = "sd_csrf"
+CSRF_HEADER_NAME = "x-csrf-token"
+CSRF_QUERY_NAME = "csrf_token"
 VISITOR_STORE_PATH = os.path.join(SMARTDRIVE_AUDIT_DIR, "visitor_registry.json")
 EVENT_STORE_PATH = os.path.join(SMARTDRIVE_AUDIT_DIR, "audit_events.json")
 
@@ -99,16 +107,96 @@ def _is_trackable_request(path: str) -> bool:
     return not path.startswith(static_prefixes)
 
 
+def _is_unsafe_method(method: str) -> bool:
+    return method.upper() in {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _has_same_origin(request: Request) -> bool:
+    host = (request.headers.get("host") or "").strip().lower()
+    if not host:
+        return False
+
+    origin = (request.headers.get("origin") or "").strip()
+    if origin:
+        parsed_origin = urlsplit(origin)
+        return (
+            parsed_origin.scheme in {"http", "https"}
+            and parsed_origin.netloc.lower() == host
+        )
+
+    referer = (request.headers.get("referer") or "").strip()
+    if referer:
+        parsed_referer = urlsplit(referer)
+        return (
+            parsed_referer.scheme in {"http", "https"}
+            and parsed_referer.netloc.lower() == host
+        )
+
+    return False
+
+
+def _has_valid_csrf_token(request: Request, csrf_token: str) -> bool:
+    header_token = (request.headers.get(CSRF_HEADER_NAME) or "").strip()
+    query_token = (request.query_params.get(CSRF_QUERY_NAME) or "").strip()
+
+    for candidate in (header_token, query_token):
+        if candidate and secrets.compare_digest(candidate, csrf_token):
+            return True
+
+    return False
+
+
+def _normalize_ip(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    candidate = value.strip()
+    if not candidate:
+        return None
+
+    if candidate.startswith("[") and "]" in candidate:
+        candidate = candidate[1 : candidate.index("]")]
+    elif candidate.count(":") == 1 and "." in candidate:
+        candidate = candidate.split(":", 1)[0]
+
+    try:
+        return str(ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def _pick_forwarded_ip(forwarded_for: str) -> str | None:
+    parts = [part.strip() for part in forwarded_for.split(",") if part.strip()]
+    for part in parts:
+        normalized = _normalize_ip(part)
+        if normalized:
+            return normalized
+    return None
+
+
 def extract_client_ip(request: Request) -> str:
+    peer_host = request.client.host if request.client else "-"
+    peer_ip = _normalize_ip(peer_host)
+
+    if not SMARTDRIVE_TRUST_PROXY_HEADERS:
+        return peer_ip or peer_host
+
+    if not peer_ip or peer_ip not in SMARTDRIVE_TRUSTED_PROXY_IPS:
+        return peer_ip or peer_host
+
     forwarded_for = request.headers.get("x-forwarded-for", "").strip()
     if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+        forwarded_ip = _pick_forwarded_ip(forwarded_for)
+        if forwarded_ip:
+            return forwarded_ip
 
     real_ip = request.headers.get("x-real-ip", "").strip()
     if real_ip:
-        return real_ip
+        normalized_real_ip = _normalize_ip(real_ip)
+        if normalized_real_ip:
+            return normalized_real_ip
 
-    return request.client.host if request.client else "-"
+    return peer_ip or peer_host
 
 
 def ensure_access_control_storage() -> None:
@@ -438,6 +526,45 @@ def setup_access_control(app: FastAPI) -> None:
         request.state.client_ip = visitor_info["client_ip"]
         request.state.visitor_is_owner = visitor_info["is_owner"]
 
+        csrf_token = request.cookies.get(CSRF_COOKIE_NAME) or uuid.uuid4().hex
+        set_csrf_cookie = CSRF_COOKIE_NAME not in request.cookies
+        request.state.csrf_token = csrf_token
+
+        if _is_unsafe_method(request.method):
+            has_valid_token = _has_valid_csrf_token(request, csrf_token)
+            has_same_origin = _has_same_origin(request)
+
+            if not (has_valid_token or has_same_origin):
+                record_action_event(
+                    visitor_id=visitor_info["visitor_id"],
+                    action="csrf_rejected",
+                    path=path,
+                    details={
+                        "method": request.method,
+                        "origin": request.headers.get("origin", ""),
+                        "referer": request.headers.get("referer", ""),
+                    },
+                    status="blocked",
+                )
+                response = PlainTextResponse("Solicitud rechazada por protección CSRF.", status_code=403)
+                if visitor_info["set_cookie"]:
+                    response.set_cookie(
+                        VISITOR_COOKIE_NAME,
+                        visitor_info["visitor_id"],
+                        max_age=31536000,
+                        httponly=True,
+                        samesite="lax",
+                    )
+                if set_csrf_cookie:
+                    response.set_cookie(
+                        CSRF_COOKIE_NAME,
+                        csrf_token,
+                        max_age=31536000,
+                        httponly=False,
+                        samesite="lax",
+                    )
+                return response
+
         is_blocked_user = visitor_info["is_blocked"] and not visitor_info["is_owner"]
         allow_blocked_path = path.startswith("/control")
 
@@ -456,6 +583,14 @@ def setup_access_control(app: FastAPI) -> None:
                     visitor_info["visitor_id"],
                     max_age=31536000,
                     httponly=True,
+                    samesite="lax",
+                )
+            if set_csrf_cookie:
+                response.set_cookie(
+                    CSRF_COOKIE_NAME,
+                    csrf_token,
+                    max_age=31536000,
+                    httponly=False,
                     samesite="lax",
                 )
             return response
@@ -482,6 +617,14 @@ def setup_access_control(app: FastAPI) -> None:
                 visitor_info["visitor_id"],
                 max_age=31536000,
                 httponly=True,
+                samesite="lax",
+            )
+        if set_csrf_cookie:
+            response.set_cookie(
+                CSRF_COOKIE_NAME,
+                csrf_token,
+                max_age=31536000,
+                httponly=False,
                 samesite="lax",
             )
 

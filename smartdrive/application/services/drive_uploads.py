@@ -3,10 +3,10 @@ import os
 from fastapi import HTTPException, UploadFile
 
 from smartdrive.infrastructure.file_ops import delete_file, path_exists, rename_path
+from smartdrive.infrastructure.logging import get_logger
 from smartdrive.infrastructure.settings import INBOX_DIR
 from smartdrive.infrastructure.storage import generate_unique_name, sanitize_input_path
 from smartdrive.infrastructure.uploads import write_upload_chunk
-from smartdrive.infrastructure.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -21,16 +21,31 @@ def get_upload_status(filename: str) -> dict:
 
 
 def upload_chunk(file: UploadFile, filename: str, chunk_offset: int) -> dict:
-    _ = chunk_offset
+    if chunk_offset < 0:
+        raise HTTPException(status_code=400, detail="chunk_offset inválido")
+
     safe_filename = os.path.basename(filename)
-    partial_path = os.path.join(INBOX_DIR, f"{safe_filename}.part")
+    partial_path = sanitize_input_path(f"{safe_filename}.part", INBOX_DIR)
+
+    expected_offset = os.path.getsize(partial_path) if path_exists(partial_path) else 0
+    if chunk_offset != expected_offset:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "chunk_offset desincronizado",
+                "expected_offset": expected_offset,
+            },
+        )
 
     try:
         write_upload_chunk(file, partial_path)
-        return {"received": "ok"}
-    except Exception:
-        logger.exception("Fallo escribiendo %s", safe_filename)
-        raise HTTPException(status_code=500, detail="Error I/O al escribir el archivo")
+        next_offset = os.path.getsize(partial_path)
+        return {"received": "ok", "next_offset": next_offset}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Fallo escribiendo chunk. filename=%s", safe_filename)
+        raise HTTPException(status_code=500, detail=f"Error I/O: {str(exc)}")
     finally:
         file.file.close()
 

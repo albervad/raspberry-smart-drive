@@ -90,9 +90,11 @@ def search_files(request: Request, q: str = "", mode: str = "both"):
 def open_file(request: Request, zone: str, filepath: str):
     safe_path = _resolve_file_path(zone, filepath)
     _audit(request, "open_file", details={"zone": zone, "filepath": unquote(filepath)})
-    response = FileResponse(safe_path, filename=basename(safe_path))
-    response.headers["Content-Disposition"] = f'inline; filename="{basename(safe_path)}"'
-    return response
+    return FileResponse(
+        safe_path,
+        filename=basename(safe_path),
+        content_disposition_type="inline",
+    )
 
 
 @router.get("/download/{zone}/{filepath:path}")

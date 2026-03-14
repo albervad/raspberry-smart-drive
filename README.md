@@ -201,6 +201,8 @@ Variables útiles:
 - `SMARTDRIVE_BASE_MOUNT`: sobreescribe la base de datos (`/mnt/midrive`) para usar otra ruta en local.
 - `SMARTDRIVE_PORT` / `SMARTDRIVE_HOST`: valores por defecto para `start.sh` si no se pasan parámetros.
 - `SMARTDRIVE_OWNER_IPS`: IPs consideradas "admin" para acceder al panel de control (CSV, por defecto `127.0.0.1,::1`).
+- `SMARTDRIVE_TRUST_PROXY_HEADERS`: habilita confianza en `X-Forwarded-For`/`X-Real-IP` (`0` por defecto). Activar solo detrás de proxy inverso.
+- `SMARTDRIVE_TRUSTED_PROXY_IPS`: IPs de proxies de confianza autorizados a reenviar IP cliente (CSV, por defecto `127.0.0.1,::1`).
 - `SMARTDRIVE_AUDIT_DIR`: directorio donde se guardan registros de accesos/acciones (por defecto `./.smartdrive_audit`, más rápido que usar discos externos).
 - `SMARTDRIVE_AUDIT_MAX_EVENTS`: máximo de eventos de auditoría persistidos.
 - `SMARTDRIVE_AUDIT_RECENT_LIMIT`: cuántos eventos recientes mostrar en el panel.
@@ -225,6 +227,7 @@ En desarrollo puedes aislar datos con `SMARTDRIVE_BASE_MOUNT` (por ejemplo `/tmp
 - Registra acciones clave: subir archivos (finalización), borrar, mover, renombrar, guardar portapapeles, descargar ZIP y vistas del portfolio.
 - Permite borrar registros globales o por usuario una vez revisados.
 - Estadísticas de portfolio excluyen automáticamente a usuarios marcados como admin.
+- Endpoints mutables (`POST`/`PUT`/`PATCH`/`DELETE`) aplican protección CSRF (token y validación same-origin).
 
 ## 🛣️ Roadmap de seguridad (portfolio)
 

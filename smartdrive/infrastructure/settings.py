@@ -62,6 +62,14 @@ SMARTDRIVE_OWNER_IPS = _as_csv_set(
     os.getenv("SMARTDRIVE_OWNER_IPS"),
     default={"127.0.0.1", "::1"},
 )
+SMARTDRIVE_TRUST_PROXY_HEADERS = _as_bool(
+    os.getenv("SMARTDRIVE_TRUST_PROXY_HEADERS"),
+    default=False,
+)
+SMARTDRIVE_TRUSTED_PROXY_IPS = _as_csv_set(
+    os.getenv("SMARTDRIVE_TRUSTED_PROXY_IPS"),
+    default={"127.0.0.1", "::1"},
+)
 SMARTDRIVE_AUDIT_MAX_EVENTS = _as_int(os.getenv("SMARTDRIVE_AUDIT_MAX_EVENTS"), default=5000)
 SMARTDRIVE_AUDIT_RECENT_LIMIT = _as_int(os.getenv("SMARTDRIVE_AUDIT_RECENT_LIMIT"), default=200)
 SMARTDRIVE_NEW_VISITOR_WINDOW_HOURS = _as_int(

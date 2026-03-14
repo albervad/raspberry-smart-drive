@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ request.state.csrf_token }}">
     <title>Panel de Control | Smart Drive</title>
     <link rel="icon" type="image/png" href="/static/img/icon.png">
     <style>
@@ -317,5 +318,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')?.trim() || '';
+            if (!token) return;
+
+            const forms = document.querySelectorAll('form[action]');
+            forms.forEach(function (form) {
+                try {
+                    const url = new URL(form.getAttribute('action'), window.location.origin);
+                    if (!url.searchParams.get('csrf_token')) {
+                        url.searchParams.set('csrf_token', token);
+                    }
+                    form.setAttribute('action', `${url.pathname}${url.search}`);
+                } catch (error) {}
+            });
+        })();
+    </script>
 </body>
 </html>
