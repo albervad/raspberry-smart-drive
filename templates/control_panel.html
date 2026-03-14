@@ -142,6 +142,24 @@
             font-size: 0.8rem;
         }
 
+        .search-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input {
+            min-width: 260px;
+            max-width: 420px;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-main);
+        }
+
         .small { color: var(--text-muted); font-size: 0.82rem; }
 
         @media (max-width: 900px) {
@@ -166,6 +184,25 @@
                     <button class="btn btn-danger" type="submit">Borrar todos los registros</button>
                 </form>
             </div>
+        </div>
+
+        <div class="panel" style="padding:10px 14px;">
+            <form method="get" action="/control" class="search-form">
+                <input
+                    class="search-input"
+                    type="text"
+                    name="q"
+                    value="{{ search_query or '' }}"
+                    placeholder="Buscar por IP, visitor_id, huella o user-agent"
+                >
+                {% if non_owner_only %}
+                <input type="hidden" name="non_owner_only" value="1">
+                {% endif %}
+                <button class="btn" type="submit">Buscar</button>
+                {% if search_query %}
+                <a class="btn btn-secondary" href="{% if non_owner_only %}/control?non_owner_only=1{% else %}/control{% endif %}">Limpiar filtro</a>
+                {% endif %}
+            </form>
         </div>
 
         <div class="panel">
@@ -259,6 +296,9 @@
 
                                     <form method="post" action="/control/events/clear/{{ visitor.visitor_id }}{% if non_owner_only %}?non_owner_only=1{% endif %}">
                                         <button class="btn btn-secondary" type="submit">Borrar sus registros</button>
+                                    </form>
+                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/purge{% if non_owner_only %}?non_owner_only=1{% endif %}">
+                                        <button class="btn btn-danger" type="submit">Eliminar usuario</button>
                                     </form>
                                 </div>
                             </td>
