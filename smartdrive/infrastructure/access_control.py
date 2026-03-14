@@ -494,7 +494,7 @@ def clear_detected_visitors(preserve_visitor_ids: set[str] | None = None) -> int
         removed_count = 0
 
         for visitor_id, visitor in visitors.items():
-            if visitor_id in preserve_ids:
+            if visitor_id in preserve_ids or bool(visitor.get("is_owner", False)):
                 kept_visitors[visitor_id] = visitor
                 continue
             removed_count += 1
