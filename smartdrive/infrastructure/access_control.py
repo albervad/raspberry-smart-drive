@@ -450,7 +450,53 @@ def clear_detected_visitors(preserve_visitor_ids: set[str] | None = None) -> int
     return removed_count
 
 
-def get_control_panel_data(non_owner_only: bool = False) -> dict[str, Any]:
+def purge_visitor_records(visitor_id: str, preserve_visitor_ids: set[str] | None = None) -> dict[str, Any]:
+    ensure_access_control_storage()
+    preserve_ids = set(preserve_visitor_ids or set())
+
+    if visitor_id in preserve_ids:
+        return {"removed_visitor": False, "removed_events": 0, "skipped_preserved": True}
+
+    with _LOCK:
+        visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
+        events_data = _read_json(EVENT_STORE_PATH, {"events": []})
+
+        visitors = visitors_data.setdefault("visitors", {})
+        removed_visitor = visitor_id in visitors
+        if removed_visitor:
+            visitors.pop(visitor_id, None)
+
+        events = events_data.setdefault("events", [])
+        original_event_count = len(events)
+        events = [event for event in events if event.get("visitor_id") != visitor_id]
+        removed_events = original_event_count - len(events)
+
+        visitors_data["visitors"] = visitors
+        events_data["events"] = events
+        _write_json(VISITOR_STORE_PATH, visitors_data)
+        _write_json(EVENT_STORE_PATH, events_data)
+
+    return {
+        "removed_visitor": removed_visitor,
+        "removed_events": removed_events,
+        "skipped_preserved": False,
+    }
+
+
+def _matches_visitor_query(visitor: dict[str, Any], query: str) -> bool:
+    text = " ".join(
+        [
+            str(visitor.get("visitor_id", "")),
+            str(visitor.get("last_ip", "")),
+            str(visitor.get("fingerprint", "")),
+            str(visitor.get("user_agent", "")),
+            str(visitor.get("accept_language", "")),
+        ]
+    ).lower()
+    return query in text
+
+
+def get_control_panel_data(non_owner_only: bool = False, query: str = "") -> dict[str, Any]:
     ensure_access_control_storage()
 
     with _LOCK:
@@ -467,6 +513,10 @@ def get_control_panel_data(non_owner_only: bool = False) -> dict[str, Any]:
         visitor["visitor_short"] = visitor.get("visitor_id", "")[:8]
         visitors.append(visitor)
 
+    query_normalized = query.strip().lower()
+    if query_normalized:
+        visitors = [visitor for visitor in visitors if _matches_visitor_query(visitor, query_normalized)]
+
     visitors.sort(key=lambda item: item.get("last_seen", ""), reverse=True)
 
     events_sorted = sorted(events, key=lambda item: item.get("timestamp", ""), reverse=True)
@@ -477,6 +527,19 @@ def get_control_panel_data(non_owner_only: bool = False) -> dict[str, Any]:
         event["visitor_short"] = event.get("visitor_id", "")[:8]
         event["ip"] = visitor_data.get("last_ip", "-")
         event["is_owner"] = bool(visitor_data.get("is_owner", False))
+
+    if query_normalized:
+        visitor_ids = {visitor.get("visitor_id") for visitor in visitors}
+        recent_events = [
+            event
+            for event in recent_events
+            if (
+                event.get("visitor_id") in visitor_ids
+                or query_normalized in str(event.get("path", "")).lower()
+                or query_normalized in str(event.get("action", "")).lower()
+                or query_normalized in str(event.get("ip", "")).lower()
+            )
+        ]
 
     if non_owner_only:
         recent_events = [event for event in recent_events if not event.get("is_owner", False)]
@@ -515,6 +578,7 @@ def get_control_panel_data(non_owner_only: bool = False) -> dict[str, Any]:
         "visitors": visitors,
         "events": recent_events,
         "non_owner_only": non_owner_only,
+        "search_query": query,
         "new_visitor_window_hours": SMARTDRIVE_NEW_VISITOR_WINDOW_HOURS,
     }
 

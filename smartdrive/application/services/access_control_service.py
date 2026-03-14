@@ -4,14 +4,15 @@ from smartdrive.infrastructure.access_control import (
     clear_action_events,
     clear_detected_visitors,
     get_control_panel_data,
+    purge_visitor_records,
     record_action_event,
     set_visitor_block_state,
     set_visitor_owner_state,
 )
 
 
-def get_access_control_dashboard(non_owner_only: bool = False) -> dict[str, Any]:
-    return get_control_panel_data(non_owner_only=non_owner_only)
+def get_access_control_dashboard(non_owner_only: bool = False, query: str = "") -> dict[str, Any]:
+    return get_control_panel_data(non_owner_only=non_owner_only, query=query)
 
 
 def track_user_action(
@@ -45,3 +46,8 @@ def clear_event_records(visitor_id: str | None = None) -> int:
 def clear_detected_users(current_visitor_id: str | None = None) -> int:
     preserve_ids = {current_visitor_id} if current_visitor_id else None
     return clear_detected_visitors(preserve_visitor_ids=preserve_ids)
+
+
+def delete_user_records(visitor_id: str, current_visitor_id: str | None = None) -> dict[str, Any]:
+    preserve_ids = {current_visitor_id} if current_visitor_id else None
+    return purge_visitor_records(visitor_id=visitor_id, preserve_visitor_ids=preserve_ids)

@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from smartdrive.application.services.access_control_service import (
     clear_detected_users,
     clear_event_records,
+    delete_user_records,
     get_access_control_dashboard,
     track_user_action,
     update_visitor_block_state,
@@ -38,9 +39,9 @@ def _redirect_control(request: Request) -> RedirectResponse:
 
 
 @router.get("/control")
-def control_panel(request: Request, non_owner_only: bool = False):
+def control_panel(request: Request, non_owner_only: bool = False, q: str = ""):
     _require_owner(request)
-    context = get_access_control_dashboard(non_owner_only=non_owner_only)
+    context = get_access_control_dashboard(non_owner_only=non_owner_only, query=q)
     context["request"] = request
     return templates.TemplateResponse("control_panel.html", context)
 
@@ -97,4 +98,13 @@ def clear_all_visitors(request: Request):
     current_visitor_id = getattr(request.state, "visitor_id", None)
     removed = clear_detected_users(current_visitor_id=current_visitor_id)
     _audit(request, "clear_detected_users", details={"removed": removed})
+    return _redirect_control(request)
+
+
+@router.post("/control/visitor/{visitor_id}/purge")
+def purge_visitor(request: Request, visitor_id: str):
+    _require_owner(request)
+    current_visitor_id = getattr(request.state, "visitor_id", None)
+    result = delete_user_records(visitor_id=visitor_id, current_visitor_id=current_visitor_id)
+    _audit(request, "purge_visitor", details={"target": visitor_id, **result})
     return _redirect_control(request)
