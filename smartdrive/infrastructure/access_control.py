@@ -428,15 +428,23 @@ def clear_action_events(visitor_id: str | None = None) -> int:
     return original_count - len(events)
 
 
-def clear_detected_visitors() -> int:
+def clear_detected_visitors(preserve_visitor_ids: set[str] | None = None) -> int:
     ensure_access_control_storage()
+    preserve_ids = set(preserve_visitor_ids or set())
 
     with _LOCK:
         visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
         visitors = visitors_data.setdefault("visitors", {})
-        removed_count = len(visitors)
+        kept_visitors: dict[str, dict[str, Any]] = {}
+        removed_count = 0
 
-        visitors_data["visitors"] = {}
+        for visitor_id, visitor in visitors.items():
+            if visitor_id in preserve_ids:
+                kept_visitors[visitor_id] = visitor
+                continue
+            removed_count += 1
+
+        visitors_data["visitors"] = kept_visitors
         _write_json(VISITOR_STORE_PATH, visitors_data)
 
     return removed_count

@@ -94,6 +94,7 @@ def clear_visitor_events(request: Request, visitor_id: str):
 @router.post("/control/visitors/clear")
 def clear_all_visitors(request: Request):
     _require_owner(request)
-    removed = clear_detected_users()
+    current_visitor_id = getattr(request.state, "visitor_id", None)
+    removed = clear_detected_users(current_visitor_id=current_visitor_id)
     _audit(request, "clear_detected_users", details={"removed": removed})
     return _redirect_control(request)

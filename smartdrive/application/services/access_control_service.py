@@ -42,5 +42,6 @@ def clear_event_records(visitor_id: str | None = None) -> int:
     return clear_action_events(visitor_id=visitor_id)
 
 
-def clear_detected_users() -> int:
-    return clear_detected_visitors()
+def clear_detected_users(current_visitor_id: str | None = None) -> int:
+    preserve_ids = {current_visitor_id} if current_visitor_id else None
+    return clear_detected_visitors(preserve_visitor_ids=preserve_ids)
