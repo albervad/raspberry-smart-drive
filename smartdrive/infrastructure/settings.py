@@ -20,3 +20,20 @@ CONTENT_SEARCH_EXTENSIONS = {
     ".xml", ".html", ".css", ".js", ".py", ".java", ".ts", ".tsx",
     ".jsx", ".sql", ".sh", ".conf", ".rtf", ".pdf", ".docx", ".odt"
 }
+
+
+def _as_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+SMARTDRIVE_DEBUG = _as_bool(os.getenv("SMARTDRIVE_DEBUG"), default=False)
+SMARTDRIVE_REQUEST_LOGGING = _as_bool(
+    os.getenv("SMARTDRIVE_REQUEST_LOGGING"),
+    default=SMARTDRIVE_DEBUG,
+)
+SMARTDRIVE_LOG_LEVEL = os.getenv(
+    "SMARTDRIVE_LOG_LEVEL",
+    "DEBUG" if SMARTDRIVE_DEBUG else "INFO",
+).upper()

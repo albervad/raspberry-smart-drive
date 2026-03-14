@@ -139,6 +139,20 @@ sudo systemctl status smartdrive
 ./start.sh
 ```
 
+### Debug logs (desarrollo)
+
+Para activar trazas de depuración y logs HTTP de cada request:
+
+```bash
+SMARTDRIVE_DEBUG=1 SMARTDRIVE_REQUEST_LOGGING=1 ./start.sh
+```
+
+Variables útiles:
+
+- `SMARTDRIVE_DEBUG`: activa modo debug (por defecto `0`).
+- `SMARTDRIVE_REQUEST_LOGGING`: activa middleware de trazas HTTP (por defecto hereda `SMARTDRIVE_DEBUG`).
+- `SMARTDRIVE_LOG_LEVEL`: fuerza nivel de log (`DEBUG`, `INFO`, `WARNING`, etc.).
+
 Acceso local:
 
 - `http://TU_IP:8000`

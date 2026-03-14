@@ -4,7 +4,11 @@ from urllib.parse import quote
 from fastapi import HTTPException
 from natsort import natsorted
 
+from smartdrive.infrastructure.logging import get_logger
 from smartdrive.infrastructure.settings import BASE_MOUNT, INBOX_DIR
+
+
+logger = get_logger("storage")
 
 
 def sanitize_input_path(user_input: str, base_dir: str) -> str:
@@ -21,6 +25,7 @@ def sanitize_input_path(user_input: str, base_dir: str) -> str:
         in_jail = False
 
     if not in_jail:
+        logger.warning("Path traversal blocked. user_input=%s base_dir=%s", user_input, base_dir)
         raise HTTPException(status_code=403, detail=f"Forbidden: Acceso denegado a {user_input}")
     return safe_path
 
@@ -49,15 +54,18 @@ def get_disk_usage() -> tuple[str, str, str]:
 
 def list_inbox_files() -> list[dict]:
     if not os.path.exists(INBOX_DIR):
+        logger.debug("Inbox directory not found: %s", INBOX_DIR)
         return []
 
     file_names = natsorted(os.listdir(INBOX_DIR))
     files = []
+    skipped_partial_files = 0
 
     for file_name in file_names:
         file_path = os.path.join(INBOX_DIR, file_name)
         if os.path.isfile(file_path):
             if file_name.endswith(".part"):
+                skipped_partial_files += 1
                 continue
 
             files.append({
@@ -66,6 +74,12 @@ def list_inbox_files() -> list[dict]:
                 "encoded_url": quote(file_name),
                 "download_url": quote(file_name),
             })
+
+    logger.debug(
+        "Loaded inbox file list. files=%s skipped_partial=%s",
+        len(files),
+        skipped_partial_files,
+    )
     return files
 
 
