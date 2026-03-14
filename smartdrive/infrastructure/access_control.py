@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 import threading
+import urllib.request
 import uuid
 from datetime import datetime, timedelta, timezone
 from ipaddress import ip_address
@@ -36,6 +37,9 @@ EVENT_STORE_PATH = os.path.join(SMARTDRIVE_AUDIT_DIR, "audit_events.json")
 
 _LOCK = threading.Lock()
 _STORAGE_READY = False
+
+_GEO_CACHE: dict[str, str] = {}
+_GEO_CACHE_LOCK = threading.Lock()
 
 
 def _utcnow_iso() -> str:
@@ -197,6 +201,43 @@ def extract_client_ip(request: Request) -> str:
             return normalized_real_ip
 
     return peer_ip or peer_host
+
+
+def _is_private_ip(ip: str) -> bool:
+    if not ip or ip in ("-", ""):
+        return True
+    try:
+        addr = ip_address(ip)
+        return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+    except ValueError:
+        return False
+
+
+def geolocate_ip(ip: str) -> str:
+    """Return 'City, Country' for a public IP, 'Local/Red privada' for private ones.
+    Results are cached in memory for the lifetime of the process."""
+    if _is_private_ip(ip):
+        return "Local/Red privada"
+
+    with _GEO_CACHE_LOCK:
+        cached = _GEO_CACHE.get(ip)
+    if cached is not None:
+        return cached
+
+    result = "Desconocida"
+    try:
+        url = f"http://ip-api.com/json/{ip}?fields=status,country,city"
+        with urllib.request.urlopen(url, timeout=3) as resp:  # noqa: S310
+            data = json.loads(resp.read())
+        if data.get("status") == "success":
+            parts = [data.get("city", ""), data.get("country", "")]
+            result = ", ".join(p for p in parts if p) or "Desconocida"
+    except Exception:
+        pass
+
+    with _GEO_CACHE_LOCK:
+        _GEO_CACHE[ip] = result
+    return result
 
 
 def ensure_access_control_storage() -> None:
@@ -401,6 +442,12 @@ def set_visitor_owner_state(visitor_id: str, is_owner: bool) -> bool:
         if visitor is None:
             return False
 
+        # Prevent removing owner status from visitors whose IP is permanently trusted
+        if not is_owner:
+            visitor_ip = visitor.get("last_ip") or visitor.get("first_ip") or ""
+            if visitor_ip in SMARTDRIVE_OWNER_IPS:
+                return False
+
         visitor["is_owner"] = bool(is_owner)
         visitors[visitor_id] = visitor
         visitors_data["visitors"] = visitors
@@ -419,6 +466,14 @@ def clear_action_events(visitor_id: str | None = None) -> int:
 
         if visitor_id:
             events = [event for event in events if event.get("visitor_id") != visitor_id]
+            # Also reset the request/action counters stored on the visitor record
+            visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
+            visitors = visitors_data.setdefault("visitors", {})
+            if visitor_id in visitors:
+                visitors[visitor_id]["requests_count"] = 0
+                visitors[visitor_id]["actions_count"] = 0
+                visitors_data["visitors"] = visitors
+                _write_json(VISITOR_STORE_PATH, visitors_data)
         else:
             events = []
 
@@ -496,7 +551,9 @@ def _matches_visitor_query(visitor: dict[str, Any], query: str) -> bool:
     return query in text
 
 
-def get_control_panel_data(non_owner_only: bool = False, query: str = "") -> dict[str, Any]:
+def get_control_panel_data(
+    non_owner_only: bool = False, query: str = "", current_visitor_id: str = ""
+) -> dict[str, Any]:
     ensure_access_control_storage()
 
     with _LOCK:
@@ -511,6 +568,10 @@ def get_control_panel_data(non_owner_only: bool = False, query: str = "") -> dic
         visitor = dict(raw_visitor)
         visitor["is_new"] = _is_new_visitor(visitor.get("first_seen"))
         visitor["visitor_short"] = visitor.get("visitor_id", "")[:8]
+        visitor["is_self"] = bool(current_visitor_id and visitor.get("visitor_id") == current_visitor_id)
+        visitor_ip = visitor.get("last_ip") or visitor.get("first_ip") or ""
+        visitor["is_protected_owner"] = visitor_ip in SMARTDRIVE_OWNER_IPS
+        visitor["geo_location"] = geolocate_ip(visitor_ip) if visitor_ip else "Desconocida"
         visitors.append(visitor)
 
     query_normalized = query.strip().lower()

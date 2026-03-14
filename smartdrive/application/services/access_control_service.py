@@ -11,8 +11,12 @@ from smartdrive.infrastructure.access_control import (
 )
 
 
-def get_access_control_dashboard(non_owner_only: bool = False, query: str = "") -> dict[str, Any]:
-    return get_control_panel_data(non_owner_only=non_owner_only, query=query)
+def get_access_control_dashboard(
+    non_owner_only: bool = False, query: str = "", current_visitor_id: str = ""
+) -> dict[str, Any]:
+    return get_control_panel_data(
+        non_owner_only=non_owner_only, query=query, current_visitor_id=current_visitor_id
+    )
 
 
 def track_user_action(

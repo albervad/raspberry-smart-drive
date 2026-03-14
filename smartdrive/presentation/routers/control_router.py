@@ -41,7 +41,10 @@ def _redirect_control(request: Request) -> RedirectResponse:
 @router.get("/control")
 def control_panel(request: Request, non_owner_only: bool = False, q: str = ""):
     _require_owner(request)
-    context = get_access_control_dashboard(non_owner_only=non_owner_only, query=q)
+    current_visitor_id = getattr(request.state, "visitor_id", "") or ""
+    context = get_access_control_dashboard(
+        non_owner_only=non_owner_only, query=q, current_visitor_id=current_visitor_id
+    )
     context["request"] = request
     return templates.TemplateResponse("control_panel.html", context)
 

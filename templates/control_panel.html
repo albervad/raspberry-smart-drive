@@ -162,6 +162,9 @@
 
         .small { color: var(--text-muted); font-size: 0.82rem; }
 
+        .row-self td { background: rgba(92, 167, 255, 0.07); }
+        .row-self td:first-child { border-left: 3px solid var(--accent-color); }
+
         @media (max-width: 900px) {
             table { min-width: 640px; }
         }
@@ -252,11 +255,11 @@
                     </thead>
                     <tbody>
                         {% for visitor in visitors %}
-                        <tr>
+                        <tr{% if visitor.is_self %} class="row-self"{% endif %}>
                             <td>
-                                <div class="mono">{{ visitor.visitor_short }}</div>
+                                <div class="mono">{{ visitor.visitor_short }}{% if visitor.is_self %} <span style="color:var(--accent-color);font-size:0.75rem;">(tú)</span>{% endif %}</div>
                                 <div class="details">
-                                    <div>IP: {{ visitor.last_ip }}</div>
+                                    <div>IP: {{ visitor.last_ip }} — <span style="color:var(--text-muted);">{{ visitor.geo_location }}</span></div>
                                     <div title="{{ visitor.user_agent }}">UA: {{ visitor.user_agent[:70] }}{% if visitor.user_agent|length > 70 %}...{% endif %}</div>
                                 </div>
                             </td>
@@ -285,9 +288,11 @@
                                     {% endif %}
 
                                     {% if visitor.is_owner %}
+                                    {% if not visitor.is_protected_owner %}
                                     <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/unmark-owner{% if non_owner_only %}?non_owner_only=1{% endif %}">
                                         <button class="btn btn-secondary" type="submit">Quitar admin</button>
                                     </form>
+                                    {% endif %}
                                     {% else %}
                                     <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/mark-owner{% if non_owner_only %}?non_owner_only=1{% endif %}">
                                         <button class="btn btn-secondary" type="submit">Marcar admin</button>
