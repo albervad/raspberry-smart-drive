@@ -22,15 +22,21 @@
 
         * { box-sizing: border-box; }
 
+        html {
+            min-height: 100%;
+            background:
+                radial-gradient(900px 420px at 8% -8%, rgba(92, 167, 255, 0.22), transparent 60%),
+                radial-gradient(900px 480px at 90% -15%, rgba(79, 70, 229, 0.18), transparent 65%),
+                var(--bg);
+            background-attachment: fixed;
+        }
+
         body {
             margin: 0;
             padding: 18px;
             font-family: Inter, system-ui, sans-serif;
             color: var(--text);
-            background:
-                radial-gradient(900px 420px at 8% -8%, rgba(92, 167, 255, 0.22), transparent 60%),
-                radial-gradient(900px 480px at 90% -15%, rgba(79, 70, 229, 0.18), transparent 65%),
-                var(--bg);
+            min-height: 100vh;
         }
 
         .container { width: min(1400px, 96vw); margin: 0 auto; }
@@ -46,7 +52,7 @@
             margin-bottom: 18px;
         }
         .page-header h1 { margin: 0; font-size: 1.45rem; }
-        .page-header-nav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .page-header-nav { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .panel {
             background: var(--card);
@@ -152,9 +158,6 @@
         <div class="page-header-nav">
             <a class="btn btn-secondary" href="/drive/">Drive</a>
             <a class="btn btn-secondary" href="/">Portfolio</a>
-            <form method="post" action="/control/visitors/clear" style="margin:0;">
-                <button class="btn btn-danger" type="submit">Borrar usuarios detectados</button>
-            </form>
         </div>
     </div>
 
@@ -191,7 +194,12 @@
         <div class="panel-header">
             <div>
                 <h3>Usuarios detectados</h3>
-                <p class="small" style="margin:4px 0 0;">Identificación pasiva: cookie + IP + user-agent + idioma.</p>
+                <p class="small" style="margin: 4px 0 0;">Identificación pasiva: cookie + IP + user-agent + idioma.</p>
+            </div>
+            <div class="panel-header-actions">
+                <form method="post" action="/control/visitors/clear" style="margin:0;">
+                    <button class="btn btn-danger" type="submit">Borrar usuarios detectados</button>
+                </form>
             </div>
         </div>
         <div class="table-responsive">
