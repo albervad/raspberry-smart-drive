@@ -8,69 +8,83 @@
     <link rel="icon" type="image/png" href="/static/img/icon.png">
     <style>
         :root {
-            --bg-color: #0b1220;
-            --card-bg: rgba(16, 24, 40, 0.82);
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --border-color: rgba(148, 163, 184, 0.22);
-            --accent-color: #5ca7ff;
+            --bg: #0b1220;
+            --card: rgba(16, 24, 40, 0.82);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.22);
+            --accent: #5ca7ff;
             --accent-hover: #3f91f0;
-            --danger-color: #ef4444;
-            --ok-color: #22c55e;
+            --danger: #ef4444;
+            --ok: #22c55e;
             --radius: 12px;
         }
 
         * { box-sizing: border-box; }
+
+        html {
+            min-height: 100%;
+            background:
+                radial-gradient(900px 420px at 8% -8%, rgba(92, 167, 255, 0.22), transparent 60%),
+                radial-gradient(900px 480px at 90% -15%, rgba(79, 70, 229, 0.18), transparent 65%),
+                var(--bg);
+            background-attachment: fixed;
+        }
+
         body {
             margin: 0;
             padding: 18px;
             font-family: Inter, system-ui, sans-serif;
-            color: var(--text-main);
-            background:
-                radial-gradient(900px 420px at 8% -8%, rgba(92, 167, 255, 0.22), transparent 60%),
-                radial-gradient(900px 480px at 90% -15%, rgba(79, 70, 229, 0.18), transparent 65%),
-                var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
         }
 
         .container { width: min(1400px, 96vw); margin: 0 auto; }
 
-        .header {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             padding-bottom: 12px;
             margin-bottom: 18px;
         }
-
-        .header h1 { margin: 0; font-size: 1.45rem; }
-
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .page-header h1 { margin: 0; font-size: 1.45rem; }
+        .page-header-nav { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .panel {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 14px;
+            padding: 16px;
             margin-bottom: 14px;
         }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .panel-header h3 { margin: 0; font-size: 1rem; }
+        .panel-header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 10px;
         }
-
         .stat {
             background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px;
         }
-
-        .stat .label { color: var(--text-muted); font-size: 0.82rem; }
+        .stat .label { color: var(--muted); font-size: 0.82rem; }
         .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
 
         .btn {
@@ -82,19 +96,20 @@
             font-weight: 600;
             font-size: 0.85rem;
             color: #f8fafc;
-            background: var(--accent-color);
+            background: var(--accent);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
-
         .btn:hover { background: var(--accent-hover); }
-        .btn-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); }
-        .btn-danger { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); }
-        .btn-danger:hover { background: var(--danger-color); color: #fff; }
-        .btn-ok { background: transparent; color: var(--ok-color); border: 1px solid var(--ok-color); }
-        .btn-ok:hover { background: var(--ok-color); color: #fff; }
+        .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: rgba(148, 163, 184, 0.1); }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-ok { background: transparent; color: var(--ok); border: 1px solid var(--ok); }
+        .btn-ok:hover { background: var(--ok); color: #fff; }
 
         .table-responsive { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 760px; }
@@ -105,281 +120,468 @@
             vertical-align: top;
             font-size: 0.88rem;
         }
+        th { color: var(--muted); font-weight: 600; }
 
-        th { color: var(--text-muted); font-weight: 600; }
-
-        .status {
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
             padding: 3px 8px;
             border-radius: 999px;
             font-size: 0.78rem;
             font-weight: 600;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             margin-right: 4px;
             margin-bottom: 4px;
         }
+        .badge-new   { border-color: var(--accent); color: var(--accent); }
+        .badge-owner { border-color: var(--ok);     color: var(--ok); }
+        .badge-block { border-color: var(--danger);  color: var(--danger); }
 
-        .status.new { border-color: var(--accent-color); color: var(--accent-color); }
-        .status.blocked { border-color: var(--danger-color); color: var(--danger-color); }
-        .status.owner { border-color: var(--ok-color); color: var(--ok-color); }
-
-        .row-actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
+        .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .row-actions form { margin: 0; }
 
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; }
-
-        .details {
-            display: grid;
-            gap: 2px;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .search-form {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-input {
-            min-width: 260px;
-            max-width: 420px;
-            width: 100%;
-            padding: 8px 10px;
+        .mono    { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; }
+        .small   { color: var(--muted); font-size: 0.82rem; }
+        .details { display: grid; gap: 2px; color: var(--muted); font-size: 0.8rem; }
+        .push-status {
+            margin-top: 8px;
+            padding: 10px;
             border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.6);
-            color: var(--text-main);
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.45);
         }
-
-        .small { color: var(--text-muted); font-size: 0.82rem; }
+        .rule-grid {
+            margin-top: 10px;
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+        .rule-item {
+            display: grid;
+            gap: 6px;
+            font-size: 0.84rem;
+            color: var(--muted);
+        }
+        .rule-item input[type="number"] {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.65);
+            color: var(--text);
+            padding: 7px 9px;
+        }
+        .rule-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 14px;
+            margin-top: 8px;
+            color: var(--text);
+            font-size: 0.88rem;
+        }
 
         .row-self td { background: rgba(92, 167, 255, 0.07); }
-        .row-self td:first-child { border-left: 3px solid var(--accent-color); }
+        .row-self td:first-child { border-left: 3px solid var(--accent); }
 
-        @media (max-width: 900px) {
-            table { min-width: 640px; }
-        }
+        @media (max-width: 900px) { table { min-width: 640px; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Panel de control de accesos</h1>
-            <div class="actions">
-                <a class="btn btn-secondary" href="/drive/">Volver al Drive</a>
-                <a class="btn btn-secondary" href="/">Portfolio</a>
-                <a class="btn btn-secondary" href="{% if non_owner_only %}/control{% else %}/control?non_owner_only=1{% endif %}">
-                    {% if non_owner_only %}Ver todos los registros{% else %}Solo no admin{% endif %}
-                </a>
-                <form method="post" action="/control/visitors/clear{% if non_owner_only %}?non_owner_only=1{% endif %}" style="margin:0;">
-                    <button class="btn btn-danger" type="submit">Borrar usuarios detectados</button>
-                </form>
-                <form method="post" action="/control/events/clear{% if non_owner_only %}?non_owner_only=1{% endif %}" style="margin:0;">
-                    <button class="btn btn-danger" type="submit">Borrar todos los registros</button>
-                </form>
+<div class="container">
+
+    <div class="page-header">
+        <h1>Panel de control de accesos</h1>
+        <div class="page-header-nav">
+            <a class="btn btn-secondary" href="/drive/">Drive</a>
+            <a class="btn btn-secondary" href="/">Portfolio</a>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="label">Usuarios detectados</div>
+                <div class="value">{{ stats.total_visitors }}</div>
             </div>
-        </div>
-
-        <div class="panel" style="padding:10px 14px;">
-            <form method="get" action="/control" class="search-form">
-                <input
-                    class="search-input"
-                    type="text"
-                    name="q"
-                    value="{{ search_query or '' }}"
-                    placeholder="Buscar por IP, visitor_id, huella o user-agent"
-                >
-                {% if non_owner_only %}
-                <input type="hidden" name="non_owner_only" value="1">
-                {% endif %}
-                <button class="btn" type="submit">Buscar</button>
-                {% if search_query %}
-                <a class="btn btn-secondary" href="{% if non_owner_only %}/control?non_owner_only=1{% else %}/control{% endif %}">Limpiar filtro</a>
-                {% endif %}
-            </form>
-        </div>
-
-        <div class="panel">
-            <div class="stats-grid">
-                <div class="stat">
-                    <div class="label">Usuarios totales detectados</div>
-                    <div class="value">{{ stats.total_visitors }}</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Usuarios nuevos ({{ new_visitor_window_hours }}h)</div>
-                    <div class="value">{{ stats.new_visitors }}</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Visitas portfolio (excluyendo admin)</div>
-                    <div class="value">{{ stats.portfolio_visits_excluding_owner }}</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Visitantes únicos portfolio (excluyendo admin)</div>
-                    <div class="value">{{ stats.portfolio_unique_visitors_excluding_owner }}</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Visitas portfolio últimas 24h (excluyendo admin)</div>
-                    <div class="value">{{ stats.portfolio_visits_last_24h_excluding_owner }}</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Eventos auditados</div>
-                    <div class="value">{{ stats.total_events }}</div>
-                </div>
+            <div class="stat">
+                <div class="label">Nuevos ({{ new_visitor_window_hours }}h)</div>
+                <div class="value">{{ stats.new_visitors }}</div>
             </div>
-        </div>
-
-        <div class="panel">
-            <h3 style="margin-top:0;">Usuarios detectados</h3>
-            <p class="small">Identificación pasiva: cookie técnica + IP + user-agent + idioma (sin pedir permisos del navegador).</p>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Primera vez</th>
-                            <th>Última vez</th>
-                            <th>Huella</th>
-                            <th>Métricas</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for visitor in visitors %}
-                        <tr{% if visitor.is_self %} class="row-self"{% endif %}>
-                            <td>
-                                <div class="mono">{{ visitor.visitor_short }}{% if visitor.is_self %} <span style="color:var(--accent-color);font-size:0.75rem;">(tú)</span>{% endif %}</div>
-                                <div class="details">
-                                    <div>IP: {{ visitor.last_ip }} — <span style="color:var(--text-muted);">{{ visitor.geo_location }}</span></div>
-                                    <div title="{{ visitor.user_agent }}">UA: {{ visitor.user_agent[:70] }}{% if visitor.user_agent|length > 70 %}...{% endif %}</div>
-                                </div>
-                            </td>
-                            <td class="small">{{ visitor.first_seen }}</td>
-                            <td class="small">{{ visitor.last_seen }}</td>
-                            <td class="mono">{{ visitor.fingerprint }}</td>
-                            <td>
-                                <div>Requests: <strong>{{ visitor.requests_count }}</strong></div>
-                                <div>Acciones: <strong>{{ visitor.actions_count }}</strong></div>
-                            </td>
-                            <td>
-                                {% if visitor.is_new %}<span class="status new">Nuevo</span>{% endif %}
-                                {% if visitor.is_owner %}<span class="status owner">Admin</span>{% endif %}
-                                {% if visitor.is_blocked %}<span class="status blocked">Bloqueado</span>{% endif %}
-                            </td>
-                            <td>
-                                <div class="row-actions">
-                                    {% if visitor.is_blocked %}
-                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/unblock{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-ok" type="submit">Desbloquear</button>
-                                    </form>
-                                    {% else %}
-                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/block{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-danger" type="submit">Bloquear</button>
-                                    </form>
-                                    {% endif %}
-
-                                    {% if visitor.is_owner %}
-                                    {% if not visitor.is_protected_owner %}
-                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/unmark-owner{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-secondary" type="submit">Quitar admin</button>
-                                    </form>
-                                    {% endif %}
-                                    {% else %}
-                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/mark-owner{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-secondary" type="submit">Marcar admin</button>
-                                    </form>
-                                    {% endif %}
-
-                                    <form method="post" action="/control/events/clear/{{ visitor.visitor_id }}{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-secondary" type="submit">Borrar sus registros</button>
-                                    </form>
-                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/purge{% if non_owner_only %}?non_owner_only=1{% endif %}">
-                                        <button class="btn btn-danger" type="submit">Eliminar usuario</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="small">Aún no hay usuarios registrados.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="stat">
+                <div class="label">Visitas portfolio (sin admin)</div>
+                <div class="value">{{ stats.portfolio_visits_excluding_owner }}</div>
             </div>
-        </div>
-
-        <div class="panel">
-            <h3 style="margin-top:0;">Actividad reciente {% if non_owner_only %}(solo no admin){% endif %}</h3>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Usuario</th>
-                            <th>Acción</th>
-                            <th>Ruta</th>
-                            <th>Estado</th>
-                            <th>Detalle</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for event in events %}
-                        <tr>
-                            <td class="small">{{ event.timestamp }}</td>
-                            <td>
-                                <div class="mono">{{ event.visitor_short }}</div>
-                                <div class="small">{{ event.ip }}</div>
-                            </td>
-                            <td>{{ event.action }}</td>
-                            <td class="mono">{{ event.path }}</td>
-                            <td>{{ event.status }}</td>
-                            <td class="small">
-                                {% if event.details %}
-                                    {% for key, value in event.details.items() %}
-                                    <div>{{ key }}: {{ value }}</div>
-                                    {% endfor %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="small">Sin actividad reciente.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="stat">
+                <div class="label">Únicos portfolio (sin admin)</div>
+                <div class="value">{{ stats.portfolio_unique_visitors_excluding_owner }}</div>
+            </div>
+            <div class="stat">
+                <div class="label">Portfolio últimas 24h (sin admin)</div>
+                <div class="value">{{ stats.portfolio_visits_last_24h_excluding_owner }}</div>
+            </div>
+            <div class="stat">
+                <div class="label">Eventos auditados</div>
+                <div class="value">{{ stats.total_events }}</div>
             </div>
         </div>
     </div>
 
-    <script>
-        (function () {
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')?.trim() || '';
-            if (!token) return;
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h3>Notificaciones push</h3>
+                <p class="small" style="margin: 4px 0 0;">
+                    Suscripción en este dispositivo y reglas para alertar solo accesos no admin.
+                </p>
+            </div>
+            <div class="panel-header-actions">
+                <button
+                    id="btn-push-subscribe"
+                    type="button"
+                    class="btn"
+                    data-push-enabled="{% if notification_status.enabled %}1{% else %}0{% endif %}"
+                    {% if not notification_status.enabled %}disabled{% endif %}
+                >Activar en este dispositivo</button>
+                <button
+                    id="btn-push-unsubscribe"
+                    type="button"
+                    class="btn btn-secondary"
+                    data-push-enabled="{% if notification_status.enabled %}1{% else %}0{% endif %}"
+                    {% if not notification_status.enabled %}disabled{% endif %}
+                >Quitar de este dispositivo</button>
+            </div>
+        </div>
 
-            const forms = document.querySelectorAll('form[action]');
-            forms.forEach(function (form) {
-                try {
-                    const url = new URL(form.getAttribute('action'), window.location.origin);
-                    if (!url.searchParams.get('csrf_token')) {
-                        url.searchParams.set('csrf_token', token);
-                    }
-                    form.setAttribute('action', `${url.pathname}${url.search}`);
-                } catch (error) {}
+        <div id="push-status-text" class="push-status small">
+            {{ notification_status.message }} · Suscripciones activas: {{ notification_status.subscription_count }}
+        </div>
+
+        <form method="post" action="/control/notifications/settings" style="margin-top:12px;">
+            <label class="rule-toggle">
+                <input
+                    type="checkbox"
+                    name="notify_unknown_visitors"
+                    {% if notification_status.rules.notify_unknown_visitors %}checked{% endif %}
+                >
+                Avisar acceso de usuario no registrado
+            </label>
+            <label class="rule-toggle">
+                <input
+                    type="checkbox"
+                    name="notify_recurrent_requests"
+                    {% if notification_status.rules.notify_recurrent_requests %}checked{% endif %}
+                >
+                Avisar peticiones muy recurrentes
+            </label>
+
+            <div class="rule-grid">
+                <label class="rule-item">
+                    Umbral de peticiones
+                    <input type="number" name="recurrent_threshold" min="5" max="500" value="{{ notification_status.rules.recurrent_threshold }}">
+                </label>
+                <label class="rule-item">
+                    Ventana (segundos)
+                    <input type="number" name="recurrent_window_seconds" min="10" max="3600" value="{{ notification_status.rules.recurrent_window_seconds }}">
+                </label>
+                <label class="rule-item">
+                    Cooldown alerta (segundos)
+                    <input type="number" name="recurrent_cooldown_seconds" min="30" max="86400" value="{{ notification_status.rules.recurrent_cooldown_seconds }}">
+                </label>
+            </div>
+
+            <div style="margin-top:12px;">
+                <button class="btn" type="submit">Guardar reglas</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h3>Usuarios detectados</h3>
+                <p class="small" style="margin: 4px 0 0;">Identificación pasiva: cookie + IP + user-agent + idioma.</p>
+            </div>
+            <div class="panel-header-actions">
+                <form method="post" action="/control/visitors/clear" style="margin:0;">
+                    <button class="btn btn-danger" type="submit">Borrar usuarios detectados</button>
+                </form>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Primera vez</th>
+                        <th>Última vez</th>
+                        <th>Huella</th>
+                        <th>Métricas</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visitor in visitors %}
+                    <tr{% if visitor.is_self %} class="row-self"{% endif %}>
+                        <td>
+                            <div class="mono">
+                                {{ visitor.visitor_short }}
+                                {% if visitor.is_self %}<span style="color:var(--accent);font-size:0.75rem;"> (tú)</span>{% endif %}
+                            </div>
+                            <div class="details">
+                                <div>{{ visitor.last_ip }} &mdash; {{ visitor.geo_location }}</div>
+                                <div title="{{ visitor.user_agent }}">{{ visitor.user_agent[:70] }}{% if visitor.user_agent|length > 70 %}…{% endif %}</div>
+                            </div>
+                        </td>
+                        <td class="small">{{ visitor.first_seen_display }}</td>
+                        <td class="small">{{ visitor.last_seen_display }}</td>
+                        <td class="mono">{{ visitor.fingerprint }}</td>
+                        <td>
+                            <div>Req: <strong>{{ visitor.requests_count }}</strong></div>
+                            <div>Act: <strong>{{ visitor.actions_count }}</strong></div>
+                        </td>
+                        <td>
+                            {% if visitor.is_new    %}<span class="badge badge-new">Nuevo</span>{% endif %}
+                            {% if visitor.is_owner  %}<span class="badge badge-owner">Admin</span>{% endif %}
+                            {% if visitor.is_blocked%}<span class="badge badge-block">Bloqueado</span>{% endif %}
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                {% if visitor.is_blocked %}
+                                <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/unblock">
+                                    <button class="btn btn-ok" type="submit">Desbloquear</button>
+                                </form>
+                                {% else %}
+                                <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/block">
+                                    <button class="btn btn-danger" type="submit">Bloquear</button>
+                                </form>
+                                {% endif %}
+
+                                {% if visitor.is_owner %}
+                                    {% if not visitor.is_protected_owner %}
+                                    <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/unmark-owner">
+                                        <button class="btn btn-secondary" type="submit">Quitar admin</button>
+                                    </form>
+                                    {% endif %}
+                                {% else %}
+                                <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/mark-owner">
+                                    <button class="btn btn-secondary" type="submit">Marcar admin</button>
+                                </form>
+                                {% endif %}
+
+                                <form method="post" action="/control/events/clear/{{ visitor.visitor_id }}">
+                                    <button class="btn btn-secondary" type="submit">Borrar registros</button>
+                                </form>
+                                <form method="post" action="/control/visitor/{{ visitor.visitor_id }}/purge">
+                                    <button class="btn btn-danger" type="submit">Eliminar usuario</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="small">Aún no hay usuarios registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h3>Actividad reciente{% if non_owner_only %} <span class="small">(solo no admin)</span>{% endif %}</h3>
+            <div class="panel-header-actions">
+                <a class="btn btn-secondary" href="{% if non_owner_only %}/control{% else %}/control?non_owner_only=1{% endif %}">
+                    {% if non_owner_only %}Ver todos{% else %}Solo no admin{% endif %}
+                </a>
+                <form method="post" action="/control/events/clear" style="margin:0;">
+                    <button class="btn btn-danger" type="submit">Borrar todos los registros</button>
+                </form>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Ruta</th>
+                        <th>Estado</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                    <tr>
+                        <td class="small">{{ event.timestamp_display }}</td>
+                        <td>
+                            <div class="mono">{{ event.visitor_short }}</div>
+                            <div class="small">{{ event.ip }}</div>
+                        </td>
+                        <td>{{ event.action }}</td>
+                        <td class="mono">{{ event.path }}</td>
+                        <td>{{ event.status }}</td>
+                        <td class="small">
+                            {% if event.details %}
+                                {% for key, value in event.details.items() %}
+                                <div>{{ key }}: {{ value }}</div>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="small">Sin actividad reciente.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<script>
+    (function () {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')?.trim() || '';
+        document.querySelectorAll('form[action]').forEach(function (form) {
+            try {
+                const url = new URL(form.getAttribute('action'), window.location.origin);
+                if (token && !url.searchParams.get('csrf_token')) url.searchParams.set('csrf_token', token);
+                form.setAttribute('action', `${url.pathname}${url.search}`);
+            } catch (_) {}
+        });
+
+        const subscribeButton = document.getElementById('btn-push-subscribe');
+        const unsubscribeButton = document.getElementById('btn-push-unsubscribe');
+        const statusNode = document.getElementById('push-status-text');
+        if (!subscribeButton || !unsubscribeButton || !statusNode) return;
+
+        function setStatus(message) {
+            statusNode.textContent = message;
+        }
+
+        function setBusy(isBusy) {
+            subscribeButton.disabled = isBusy || subscribeButton.dataset.pushEnabled !== '1';
+            unsubscribeButton.disabled = isBusy || unsubscribeButton.dataset.pushEnabled !== '1';
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; i += 1) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        async function fetchJson(url, options) {
+            const headers = { ...(options?.headers || {}) };
+            if (token) headers['x-csrf-token'] = token;
+            const response = await fetch(url, {
+                ...(options || {}),
+                credentials: 'same-origin',
+                headers,
             });
-        })();
-    </script>
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.detail || 'Error de comunicación');
+            }
+            return payload;
+        }
+
+        async function subscribeCurrentDevice() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                throw new Error('Este navegador no soporta Web Push');
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                throw new Error('Permiso de notificaciones denegado');
+            }
+
+            const keyPayload = await fetchJson('/control/notifications/vapid-public-key');
+            const applicationServerKey = urlBase64ToUint8Array(keyPayload.publicKey || '');
+            let registration;
+            try {
+                registration = await navigator.serviceWorker.register('/control/sw.js');
+            } catch (error) {
+                const reason = (error && (error.message || String(error))) || 'No se pudo registrar Service Worker';
+                throw new Error(reason);
+            }
+
+            let subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey,
+                });
+            }
+
+            await fetchJson('/control/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription.toJSON()),
+            });
+        }
+
+        async function unsubscribeCurrentDevice() {
+            if (!('serviceWorker' in navigator)) {
+                throw new Error('Service Worker no disponible');
+            }
+
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            const registration = registrations.find((item) => {
+                const scriptUrl = item?.active?.scriptURL || item?.waiting?.scriptURL || item?.installing?.scriptURL || '';
+                return scriptUrl.includes('/control/sw.js');
+            });
+
+            if (!registration) {
+                throw new Error('No existe registro de notificaciones en este dispositivo');
+            }
+
+            const subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+                throw new Error('Este dispositivo no tiene suscripción activa');
+            }
+
+            const endpoint = subscription.endpoint;
+            await subscription.unsubscribe();
+            await fetchJson('/control/notifications/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint }),
+            });
+        }
+
+        subscribeButton.addEventListener('click', async function () {
+            setBusy(true);
+            setStatus('Activando notificaciones en este dispositivo...');
+            try {
+                await subscribeCurrentDevice();
+                setStatus('Notificaciones activadas correctamente. Recargando panel...');
+                window.location.reload();
+            } catch (error) {
+                setStatus(`No se pudo activar: ${error.message || error}`);
+            } finally {
+                setBusy(false);
+            }
+        });
+
+        unsubscribeButton.addEventListener('click', async function () {
+            setBusy(true);
+            setStatus('Eliminando suscripción de este dispositivo...');
+            try {
+                await unsubscribeCurrentDevice();
+                setStatus('Suscripción eliminada. Recargando panel...');
+                window.location.reload();
+            } catch (error) {
+                setStatus(`No se pudo eliminar: ${error.message || error}`);
+            } finally {
+                setBusy(false);
+            }
+        });
+    })();
+</script>
 </body>
 </html>

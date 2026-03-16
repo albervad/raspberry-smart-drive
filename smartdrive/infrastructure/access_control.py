@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 
 from smartdrive.infrastructure.logging import get_logger
+from smartdrive.infrastructure.push_notifications import maybe_notify_access_risk
 from smartdrive.infrastructure.settings import (
     SMARTDRIVE_AUDIT_DIR,
     SMARTDRIVE_AUDIT_MAX_EVENTS,
@@ -53,6 +54,19 @@ def _parse_iso(value: str | None) -> datetime | None:
         return datetime.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _format_datetime_for_display(value: str | None) -> str:
+    parsed = _parse_iso(value)
+    if not parsed:
+        return value or "-"
+
+    try:
+        local_dt = parsed.astimezone()
+    except ValueError:
+        local_dt = parsed
+
+    return local_dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
 def _is_new_visitor(first_seen_iso: str | None) -> bool:
@@ -290,6 +304,8 @@ def touch_visitor(request: Request) -> dict[str, Any]:
 
     fingerprint_seed = f"{client_ip}|{user_agent}|{accept_language}"
     fingerprint = hashlib.sha1(fingerprint_seed.encode("utf-8")).hexdigest()[:16]
+    activity_seed = f"{user_agent}|{accept_language}"
+    activity_fingerprint = hashlib.sha1(activity_seed.encode("utf-8")).hexdigest()[:16]
 
     with _LOCK:
         visitors_data = _read_json(VISITOR_STORE_PATH, {"visitors": {}})
@@ -337,6 +353,8 @@ def touch_visitor(request: Request) -> dict[str, Any]:
         "visitor_id": visitor_id,
         "set_cookie": set_cookie,
         "client_ip": client_ip,
+        "fingerprint": fingerprint,
+        "activity_fingerprint": activity_fingerprint,
         "is_owner": bool(visitor.get("is_owner", False)),
         "is_blocked": bool(visitor.get("is_blocked", False)),
         "is_new": is_new,
@@ -494,7 +512,7 @@ def clear_detected_visitors(preserve_visitor_ids: set[str] | None = None) -> int
         removed_count = 0
 
         for visitor_id, visitor in visitors.items():
-            if visitor_id in preserve_ids or bool(visitor.get("is_owner", False)):
+            if visitor_id in preserve_ids or bool(visitor.get("is_owner", False)) or bool(visitor.get("is_blocked", False)):
                 kept_visitors[visitor_id] = visitor
                 continue
             removed_count += 1
@@ -572,15 +590,26 @@ def get_control_panel_data(
         visitor_ip = visitor.get("last_ip") or visitor.get("first_ip") or ""
         visitor["is_protected_owner"] = visitor_ip in SMARTDRIVE_OWNER_IPS
         visitor["geo_location"] = geolocate_ip(visitor_ip) if visitor_ip else "Desconocida"
+        visitor["first_seen_display"] = _format_datetime_for_display(visitor.get("first_seen"))
+        visitor["last_seen_display"] = _format_datetime_for_display(visitor.get("last_seen"))
         visitors.append(visitor)
 
     query_normalized = query.strip().lower()
     if query_normalized:
         visitors = [visitor for visitor in visitors if _matches_visitor_query(visitor, query_normalized)]
 
-    visitors.sort(key=lambda item: item.get("last_seen", ""), reverse=True)
+    visitors.sort(
+        key=lambda item: _parse_iso(item.get("last_seen"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
 
-    events_sorted = sorted(events, key=lambda item: item.get("timestamp", ""), reverse=True)
+    events_sorted = sorted(
+        events,
+        key=lambda item: _parse_iso(item.get("timestamp"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
     recent_events = events_sorted[: max(SMARTDRIVE_AUDIT_RECENT_LIMIT, 1)]
 
     for event in recent_events:
@@ -588,6 +617,7 @@ def get_control_panel_data(
         event["visitor_short"] = event.get("visitor_id", "")[:8]
         event["ip"] = visitor_data.get("last_ip", "-")
         event["is_owner"] = bool(visitor_data.get("is_owner", False))
+        event["timestamp_display"] = _format_datetime_for_display(event.get("timestamp"))
 
     if query_normalized:
         visitor_ids = {visitor.get("visitor_id") for visitor in visitors}
@@ -651,6 +681,9 @@ def setup_access_control(app: FastAPI) -> None:
     async def access_control_middleware(request: Request, call_next):
         path = request.url.path
 
+        if path in {"/sw.js", "/static/sw.js"}:
+            return PlainTextResponse("Legacy service worker path disabled.", status_code=410)
+
         if not _is_trackable_request(path):
             return await call_next(request)
 
@@ -658,6 +691,25 @@ def setup_access_control(app: FastAPI) -> None:
         request.state.visitor_id = visitor_info["visitor_id"]
         request.state.client_ip = visitor_info["client_ip"]
         request.state.visitor_is_owner = visitor_info["is_owner"]
+        ip_location = geolocate_ip(visitor_info["client_ip"]) if visitor_info.get("client_ip") else "Desconocida"
+
+        notify_kwargs = {
+            "visitor_id": visitor_info["visitor_id"],
+            "fingerprint": visitor_info.get("fingerprint", ""),
+            "activity_fingerprint": visitor_info.get("activity_fingerprint", ""),
+            "set_cookie": visitor_info.get("set_cookie", False),
+            "is_owner": visitor_info["is_owner"],
+            "is_new": visitor_info["is_new"],
+            "client_ip": visitor_info["client_ip"],
+            "ip_location": ip_location,
+            "path": path,
+            "method": request.method,
+        }
+
+        try:
+            asyncio.create_task(asyncio.to_thread(maybe_notify_access_risk, **notify_kwargs))
+        except RuntimeError:
+            maybe_notify_access_risk(**notify_kwargs)
 
         csrf_token = request.cookies.get(CSRF_COOKIE_NAME) or uuid.uuid4().hex
         set_csrf_cookie = CSRF_COOKIE_NAME not in request.cookies

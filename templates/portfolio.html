@@ -3,32 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio / CV | Raspberry Smart Drive</title>
+    <title>Portfolio | Alberto Gabriel Vaduva</title>
     <link rel="icon" type="image/png" href="/static/img/icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b1020;
-            --card: rgba(16, 23, 42, 0.75);
-            --card-strong: #111827;
-            --text: #e5e7eb;
-            --muted: #9ca3af;
-            --primary: #60a5fa;
-            --primary-strong: #3b82f6;
-            --border: rgba(148, 163, 184, 0.2);
-            --ok: #34d399;
-            --radius: 16px;
+            --bg: #07111f;
+            --bg-soft: #0b1b2d;
+            --card: rgba(10, 20, 34, 0.84);
+            --card-strong: rgba(14, 28, 46, 0.94);
+            --text: #ecf3ff;
+            --muted: #9db0c9;
+            --primary: #7dd3fc;
+            --primary-strong: #38bdf8;
+            --accent: #f6c56f;
+            --ok: #5ee6a5;
+            --warn: #f5b65b;
+            --danger: #ff8f8f;
+            --border: rgba(157, 176, 201, 0.18);
+            --shadow: 0 22px 60px rgba(2, 8, 18, 0.38);
+            --radius: 18px;
         }
 
         * { box-sizing: border-box; }
 
         html, body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
             color: var(--text);
             background:
-                radial-gradient(1200px 500px at 10% -10%, rgba(59, 130, 246, 0.25), transparent 60%),
-                radial-gradient(1000px 500px at 95% 0%, rgba(52, 211, 153, 0.16), transparent 60%),
+                radial-gradient(980px 520px at 8% -10%, rgba(56, 189, 248, 0.24), transparent 60%),
+                radial-gradient(860px 420px at 92% 0%, rgba(246, 197, 111, 0.16), transparent 60%),
+                linear-gradient(180deg, rgba(7, 17, 31, 0.88), rgba(7, 17, 31, 1)),
                 var(--bg);
             min-height: 100%;
             scroll-behavior: smooth;
@@ -41,8 +47,8 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            opacity: 0.04;
-            background-image: radial-gradient(rgba(255,255,255,0.2) 0.4px, transparent 0.4px);
+            opacity: 0.035;
+            background-image: radial-gradient(rgba(255,255,255,0.22) 0.4px, transparent 0.4px);
             background-size: 3px 3px;
             z-index: 0;
         }
@@ -50,65 +56,93 @@
         .container {
             position: relative;
             z-index: 1;
-            width: min(1280px, 94%);
-            margin: 40px auto 70px;
+            width: min(1240px, 94%);
+            margin: 34px auto 72px;
         }
 
         .hero {
-            display: grid;
-            gap: 20px;
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.65));
-            border: 1px solid var(--border);
-            border-radius: calc(var(--radius) + 6px);
-            padding: 30px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            animation: floatIn 0.8s ease-out both;
             position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(140deg, rgba(10, 20, 34, 0.94), rgba(9, 25, 41, 0.84)),
+                var(--card-strong);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) + 8px);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            animation: floatIn 0.8s ease-out both;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -15% -42% auto;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba(56, 189, 248, 0.2), transparent 68%);
+            pointer-events: none;
+            animation: heroGlow 8s ease-in-out infinite;
         }
 
         .hero::after {
             content: "";
             position: absolute;
-            inset: -40% -20% auto;
-            height: 160px;
-            background: radial-gradient(circle at center, rgba(147, 197, 253, 0.18), transparent 70%);
+            inset: -22% auto auto -8%;
+            width: 360px;
+            height: 220px;
+            background: radial-gradient(circle at center, rgba(246, 197, 111, 0.12), transparent 72%);
             pointer-events: none;
-            animation: heroGlow 8s ease-in-out infinite;
         }
 
-        .badge {
+        .hero-grid {
+            display: grid;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             width: fit-content;
-            background: rgba(96, 165, 250, 0.14);
-            color: #bfdbfe;
-            border: 1px solid rgba(96, 165, 250, 0.32);
+            background: rgba(125, 211, 252, 0.12);
+            color: #d8f1ff;
+            border: 1px solid rgba(125, 211, 252, 0.28);
             border-radius: 999px;
             padding: 8px 14px;
-            font-size: 0.82rem;
+            font-size: 0.79rem;
             font-weight: 600;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
         h1 {
             margin: 0;
-            font-size: clamp(1.7rem, 4vw, 3rem);
-            line-height: 1.15;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 5vw, 4rem);
+            line-height: 1.02;
+            letter-spacing: -0.04em;
+            max-width: 12ch;
         }
 
         p {
             margin: 0;
             color: var(--muted);
-            line-height: 1.65;
+            line-height: 1.7;
+            font-size: 0.97rem;
+        }
+
+        .hero-copy {
+            max-width: 66ch;
+            font-size: 1rem;
         }
 
         .hero-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         .btn {
@@ -120,21 +154,42 @@
             padding: 11px 15px;
             font-weight: 600;
             text-decoration: none;
-            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            color: #f8fafc;
+            background: linear-gradient(135deg, var(--accent), #ffdf99);
+            color: #1c1607;
+            box-shadow: 0 10px 30px rgba(246, 197, 111, 0.24);
         }
 
         .btn-secondary {
-            background: rgba(15, 23, 42, 0.4);
+            background: rgba(10, 20, 34, 0.54);
             color: var(--text);
             border-color: var(--border);
         }
 
-        .btn:hover { transform: translateY(-2px); }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(2, 8, 18, 0.26);
+        }
+
+        .hero-panel {
+            background: rgba(8, 19, 32, 0.7);
+            border: 1px solid rgba(157, 176, 201, 0.16);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-panel h2,
+        .card h2,
+        .stack-block h3,
+        .project-card h3,
+        .writeup-detail h3 {
+            font-family: 'Space Grotesk', sans-serif;
+        }
 
         .contact-grid {
             margin-top: 12px;
@@ -148,8 +203,8 @@
             min-width: 0;
             display: grid;
             gap: 3px;
-            background: rgba(15, 23, 42, 0.56);
-            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: rgba(8, 19, 32, 0.56);
+            border: 1px solid rgba(157, 176, 201, 0.18);
             border-radius: 12px;
             padding: 11px 12px;
         }
@@ -159,13 +214,13 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            color: #93c5fd;
+            color: #a9e1ff;
             font-weight: 700;
         }
 
         .contact-item a,
         .contact-item span {
-            color: #e2e8f0;
+            color: #eef6ff;
             text-decoration: none;
             font-size: 0.93rem;
             font-weight: 600;
@@ -175,7 +230,7 @@
         }
 
         .contact-item a:hover {
-            color: #bfdbfe;
+            color: #d8f1ff;
             text-decoration: underline;
             text-underline-offset: 2px;
         }
@@ -192,8 +247,8 @@
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            padding: 22px;
+            box-shadow: 0 16px 42px rgba(2, 8, 18, 0.26);
             transform: translateY(18px);
             opacity: 0;
             transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.55s ease, border-color 0.25s ease, box-shadow 0.25s ease;
@@ -208,7 +263,7 @@
             inset: -45%;
             width: 190%;
             height: 190%;
-            background: linear-gradient(115deg, transparent 40%, rgba(148, 197, 255, 0.12) 50%, transparent 60%);
+            background: linear-gradient(115deg, transparent 40%, rgba(125, 211, 252, 0.1) 50%, transparent 60%);
             transform: translateX(-160%);
             opacity: 0;
             transition: opacity 0.18s ease;
@@ -221,8 +276,8 @@
         }
 
         .card:hover {
-            border-color: rgba(96, 165, 250, 0.4);
-            box-shadow: 0 16px 34px rgba(9, 12, 22, 0.35);
+            border-color: rgba(125, 211, 252, 0.28);
+            box-shadow: 0 22px 44px rgba(2, 8, 18, 0.36);
             transform: translateY(-2px);
         }
 
@@ -238,8 +293,8 @@
 
         .card h2 {
             margin: 0 0 14px;
-            font-size: 1.05rem;
-            color: #f1f5f9;
+            font-size: 1.08rem;
+            color: #f7fbff;
         }
 
         .list {
@@ -251,12 +306,20 @@
         }
 
         .list li {
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(9, 22, 36, 0.58);
+            border: 1px solid rgba(157, 176, 201, 0.14);
             border-radius: 10px;
             padding: 11px 12px;
-            color: #cbd5e1;
+            color: #d6e5f7;
             font-size: 0.94rem;
+        }
+
+        .list.compact {
+            gap: 8px;
+        }
+
+        .list.compact li {
+            padding: 10px 11px;
         }
 
         .chip-group {
@@ -266,11 +329,11 @@
         }
 
         .chip {
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(157, 176, 201, 0.18);
+            background: rgba(9, 22, 36, 0.5);
             border-radius: 999px;
             padding: 8px 11px;
-            color: #dbeafe;
+            color: #dff2ff;
             font-size: 0.84rem;
             font-weight: 600;
         }
@@ -281,23 +344,28 @@
         }
 
         .stack-block {
-            border: 1px solid rgba(148, 163, 184, 0.16);
+            border: 1px solid rgba(157, 176, 201, 0.14);
             border-radius: 12px;
-            background: rgba(15, 23, 42, 0.42);
-            padding: 10px;
+            background: rgba(9, 22, 36, 0.42);
+            padding: 12px;
         }
 
         .stack-block h3 {
             margin: 0 0 8px;
             font-size: 0.86rem;
             letter-spacing: 0.02em;
-            color: #bfdbfe;
+            color: #bee9ff;
             text-transform: uppercase;
         }
 
         .highlight {
-            color: #e2e8f0;
+            color: #f3f8ff;
             font-weight: 600;
+        }
+
+        .accent {
+            color: #ffe2a8;
+            font-weight: 700;
         }
 
         .timeline {
@@ -314,7 +382,7 @@
             top: 2px;
             bottom: 2px;
             width: 2px;
-            background: linear-gradient(var(--primary), rgba(96, 165, 250, 0.15));
+            background: linear-gradient(var(--primary-strong), rgba(125, 211, 252, 0.12));
         }
 
         .timeline-item {
@@ -330,13 +398,13 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: var(--primary);
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+            background: var(--primary-strong);
+            box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.18);
         }
 
         .timeline-item strong {
             display: block;
-            color: #f8fafc;
+            color: #f8fbff;
             margin-bottom: 2px;
             font-size: 0.92rem;
         }
@@ -351,6 +419,18 @@
             font-weight: 600;
         }
 
+        .warn {
+            color: var(--warn);
+            font-weight: 600;
+        }
+
+        .muted-block {
+            background: rgba(8, 19, 32, 0.5);
+            border: 1px solid rgba(157, 176, 201, 0.14);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
         .writeups-toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -362,18 +442,18 @@
         .search-input {
             flex: 1 1 260px;
             min-width: 220px;
-            background: rgba(15, 23, 42, 0.55);
-            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(8, 19, 32, 0.7);
+            border: 1px solid rgba(157, 176, 201, 0.25);
             border-radius: 10px;
             color: var(--text);
             padding: 10px 12px;
             outline: none;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
         }
 
         .search-input:focus {
-            border-color: rgba(96, 165, 250, 0.75);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            border-color: rgba(125, 211, 252, 0.75);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.14);
         }
 
         .writeups-layout {
@@ -392,7 +472,7 @@
             min-width: 0;
             padding-right: 0;
             scrollbar-width: thin;
-            scrollbar-color: rgba(96, 165, 250, 0.7) rgba(15, 23, 42, 0.45);
+            scrollbar-color: rgba(125, 211, 252, 0.7) rgba(8, 19, 32, 0.45);
         }
 
         .writeups-list::-webkit-scrollbar {
@@ -401,25 +481,25 @@
         }
 
         .writeups-list::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.45);
+            background: rgba(8, 19, 32, 0.45);
             border-radius: 999px;
         }
 
         .writeups-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, rgba(96, 165, 250, 0.9), rgba(59, 130, 246, 0.75));
+            background: linear-gradient(180deg, rgba(125, 211, 252, 0.9), rgba(56, 189, 248, 0.78));
             border-radius: 999px;
-            border: 1px solid rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(8, 19, 32, 0.55);
         }
 
         .writeups-list::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(147, 197, 253, 0.95), rgba(96, 165, 250, 0.85));
+            background: linear-gradient(180deg, rgba(186, 230, 253, 0.95), rgba(125, 211, 252, 0.85));
         }
 
         .writeup-item {
             width: 100%;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            background: rgba(15, 23, 42, 0.5);
-            color: #dbeafe;
+            border: 1px solid rgba(157, 176, 201, 0.18);
+            background: rgba(8, 19, 32, 0.56);
+            color: #dff2ff;
             border-radius: 10px;
             padding: 10px;
             text-align: left;
@@ -429,17 +509,17 @@
 
         .writeup-item:hover {
             transform: translateY(-1px);
-            border-color: rgba(96, 165, 250, 0.65);
+            border-color: rgba(125, 211, 252, 0.55);
         }
 
         .writeup-item.active {
-            border-color: rgba(96, 165, 250, 0.85);
-            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(125, 211, 252, 0.82);
+            background: rgba(56, 189, 248, 0.12);
         }
 
         .writeup-item strong {
             display: block;
-            color: #f8fafc;
+            color: #f8fbff;
             margin-bottom: 4px;
             font-size: 0.93rem;
         }
@@ -450,8 +530,8 @@
         }
 
         .writeup-detail {
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(157, 176, 201, 0.18);
+            background: rgba(8, 19, 32, 0.52);
             border-radius: 12px;
             padding: 14px;
             min-height: 220px;
@@ -459,7 +539,7 @@
 
         .writeup-detail h3 {
             margin: 0 0 6px;
-            color: #f8fafc;
+            color: #f8fbff;
             font-size: 1rem;
         }
 
@@ -486,15 +566,15 @@
         }
 
         .stat-card {
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(157, 176, 201, 0.16);
             border-radius: 12px;
             padding: 12px;
-            background: rgba(15, 23, 42, 0.45);
+            background: rgba(8, 19, 32, 0.5);
         }
 
         .stat-card strong {
             display: block;
-            color: #f8fafc;
+            color: #f8fbff;
             font-size: 1rem;
         }
 
@@ -506,32 +586,85 @@
         }
 
         .project-card {
-            border: 1px solid rgba(148, 163, 184, 0.18);
+            border: 1px solid rgba(157, 176, 201, 0.16);
             border-radius: 12px;
             padding: 14px;
-            background: rgba(15, 23, 42, 0.45);
+            background: rgba(8, 19, 32, 0.5);
         }
 
         .project-card h3 {
             margin: 0 0 6px;
             font-size: 0.98rem;
-            color: #f8fafc;
+            color: #f8fbff;
         }
 
         .project-card ul {
             margin: 8px 0 0;
             padding-left: 18px;
-            color: #cbd5e1;
+            color: #d6e5f7;
             display: grid;
             gap: 4px;
         }
 
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+
+        .status-fixed {
+            color: #d9ffe8;
+            background: rgba(94, 230, 165, 0.12);
+            border-color: rgba(94, 230, 165, 0.22);
+        }
+
+        .status-known {
+            color: #ffe7b7;
+            background: rgba(245, 182, 91, 0.12);
+            border-color: rgba(245, 182, 91, 0.22);
+        }
+
+        .quote {
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(157, 176, 201, 0.14);
+            background: linear-gradient(135deg, rgba(8, 19, 32, 0.7), rgba(9, 22, 36, 0.54));
+            color: #e7f1ff;
+            font-size: 0.96rem;
+            line-height: 1.7;
+        }
+
+        .col-4 { grid-column: span 12; }
+        .col-5 { grid-column: span 12; }
+        .col-6 { grid-column: span 12; }
         .col-7 { grid-column: span 12; }
+        .col-8 { grid-column: span 12; }
         .col-5 { grid-column: span 12; }
         .col-12 { grid-column: span 12; }
 
         @media (min-width: 860px) {
+            .hero-grid {
+                grid-template-columns: 1.45fr 0.95fr;
+            }
+            .col-4 { grid-column: span 4; }
+            .col-5 { grid-column: span 5; }
+            .col-6 { grid-column: span 6; }
             .col-7 { grid-column: span 7; }
+            .col-8 { grid-column: span 8; }
             .col-5 { grid-column: span 5; }
             .writeups-layout {
                 grid-template-columns: 0.9fr 1.3fr;
@@ -547,14 +680,20 @@
             }
         }
 
+        @media (max-width: 859px) {
+            h1 {
+                max-width: 100%;
+            }
+        }
+
         @keyframes floatIn {
             from { opacity: 0; transform: translateY(18px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         @keyframes heroGlow {
-            0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
-            50% { transform: translateY(14px) scale(1.08); opacity: 1; }
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.65; }
+            50% { transform: translateY(18px) scale(1.08); opacity: 1; }
         }
 
         @keyframes cardSweep {
@@ -575,236 +714,271 @@
 <body>
     <div class="noise"></div>
     <main class="container">
-       <section class="hero">
-            <span class="badge">🛡️ Offensive Security Portfolio · Pentesting · Vulnerability Research</span>
-            <h1>Alberto Gabriel Vaduva · Seguridad Ofensiva con enfoque práctico y analítico</h1>
-            <p>
-                Estudiante de 3º de Ingeniería Informática (UCM, Madrid) con más de 7 años de práctica autodidacta en desarrollo. 
-                Me especializo en <span class="highlight">ciberseguridad ofensiva</span>: pentesting, análisis de vulnerabilidades, explotación controlada y desarrollo de <i>tooling</i> propio. 
-                Busco una oportunidad <span class="highlight">junior/prácticas</span> para aportar desde el primer día en evaluación técnica, automatización y documentación de hallazgos.
-            </p>
-            <div class="stat-grid">
-                <div class="stat-card"><strong>Excelencia Académica</strong><span class="small">Múltiples Matrículas de Honor (Bachillerato y UCM)</span></div>
-                <div class="stat-card"><strong>Bases Sólidas</strong><span class="small">Programación, Estructuras de Datos y Arquitectura</span></div>
-                <div class="stat-card"><strong>Objetivo eJPTv2</strong><span class="small">Preparación activa. Examen planeado: Verano 2026</span></div>
-                <div class="stat-card"><strong>ES · RO · EN</strong><span class="small">Español/Rumano nativos, Inglés fluido (Objetivo C1)</span></div>
-            </div>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="#writeups">Ver Writeups</a>
-                <a class="btn btn-secondary" href="/drive/" rel="nofollow">Acceso Drive</a>
-                <a class="btn btn-secondary" href="https://www.linkedin.com/in/alberto-gabriel-vaduva" target="_blank" rel="noopener">LinkedIn</a>
-                <a class="btn btn-secondary" href="https://github.com/albervad" target="_blank" rel="noopener">GitHub</a>
-                <a class="btn btn-secondary" href="https://app.hackthebox.com/users/1104864" target="_blank" rel="noopener">Hack The Box</a>
-                <a class="btn btn-secondary" href="#curriculum">Currículum</a>
-            </div>
-            <div class="contact-grid">
-                <div class="contact-item">
-                    <span class="label">Email</span>
-                    <a href="mailto:vaduva.albertogabriel@gmail.com">vaduva.albertogabriel@gmail.com</a>
+        <section class="hero">
+            <div class="hero-grid">
+                <div>
+                    <span class="eyebrow">Seguridad ofensiva · Pentesting · Análisis de vulnerabilidades</span>
+                    <div style="height: 16px;"></div>
+                    <h1>Alberto Gabriel Vaduva</h1>
+                    <div style="height: 16px;"></div>
+                    <p class="hero-copy">
+                        Estudiante de 3º de Ingeniería Informática en la UCM. Me especializo en <span class="accent">seguridad ofensiva, pentesting y análisis técnico de vulnerabilidades</span>.
+                        Trabajo con enumeración estructurada, explotación controlada y documentación que se pueda actuar.
+                        También automatizo, debuggeo y audito mis propios proyectos para practicar desde ambos lados.
+                    </p>
+                    <div style="height: 12px;"></div>
+                    <p class="hero-copy">
+                        Busco una oportunidad <span class="highlight">junior o de prácticas</span> en pentesting, análisis ofensivo o red team.
+                        Sigo siendo estudiante, así que entiendo que venga con formación paralela. Lo que sí tengo es laboratorio real, metodología práctica y hambre de aprender en un entorno profesional.
+                    </p>
+                    <div style="height: 18px;"></div>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#proyecto">Ver proyecto principal</a>
+                        <a class="btn btn-secondary" href="#writeups">Ver writeups</a>
+                        <a class="btn btn-secondary" href="https://www.linkedin.com/in/alberto-gabriel-vaduva" target="_blank" rel="noopener">LinkedIn</a>
+                        <a class="btn btn-secondary" href="https://github.com/albervad" target="_blank" rel="noopener">GitHub</a>
+                        <a class="btn btn-secondary" href="https://app.hackthebox.com/users/1104864" target="_blank" rel="noopener">Hack The Box</a>
+                        <a class="btn btn-secondary" href="/drive/" rel="nofollow">Drive</a>
+                    </div>
+                    <div class="contact-grid">
+                        <div class="contact-item">
+                            <span class="label">Email</span>
+                            <a href="mailto:vaduva.albertogabriel@gmail.com">vaduva.albertogabriel@gmail.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <span class="label">Teléfono</span>
+                            <a href="tel:+34640342981">+34 640 342 981</a>
+                        </div>
+                        <div class="contact-item">
+                            <span class="label">Ubicación / disponibilidad</span>
+                            <span>Madrid · Prácticas / Junior</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="contact-item">
-                    <span class="label">Teléfono</span>
-                    <a href="tel:+34640342981">+34 640 342 981</a>
-                </div>
-                <div class="contact-item">
-                    <span class="label">Ubicación / Disponibilidad</span>
-                    <span>Madrid · Prácticas / Junior</span>
-                </div>
+
+                <aside class="hero-panel">
+                    <h2>Resumen rápido del perfil</h2>
+                    <ul class="list compact">
+                        <li><span class="highlight">Formación:</span> 3º de Ingeniería Informática en la UCM, sin asignaturas repetidas.</li>
+                        <li><span class="highlight">Enfoque:</span> pentesting práctico, análisis de CVEs y laboratorios controlados.</li>
+                        <li><span class="highlight">Objetivo certificación:</span> eJPTv2 previsto para verano 2026.</li>
+                        <li><span class="highlight">Herramientas habituales:</span> Burp Suite, ffuf, Wireshark, Ghidra, John.</li>
+                    </ul>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <strong>Matrículas de Honor</strong>
+                            <span class="small">Bachillerato y disciplinas core</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>7+ años de desarrollo</strong>
+                            <span class="small">Proyectos personales y laboratorio</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>Python · Bash · Linux</strong>
+                            <span class="small">Tooling, automatización, scripting</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>ES · RO · EN</strong>
+                            <span class="small">Nativos y fluido técnico</span>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </section>
 
         <section class="grid">
             <article class="card col-7 reveal">
-                <h2>Resumen profesional</h2>
+                <h2>Mi enfoque en pentesting y análisis ofensivo</h2>
                 <p>
-                    Perfil junior orientado a la seguridad ofensiva con un profundo entendimiento de sistemas y desarrollo de software. 
-                    Complemento mi formación universitaria con <span class="highlight">laboratorios prácticos de pentesting, análisis de CVEs y validación de escenarios de explotación</span> en entornos controlados.
+                    No me conformo con encontrar un fallo. Intento entender cómo funciona la lógica vulnerable,
+                    por qué el control falló, qué impacto tiene y cómo debería haber estado diseñado.
+                    De eso salen writeups técnicos útiles, no solo una lista de pasos.
                 </p>
                 <div style="height: 14px;"></div>
                 <ul class="list">
-                    <li><span class="highlight">Fundamentos robustos:</span> Matrículas de Honor universitarias en Programación, Estructuras de Datos, Fundamentos de Computadores y Cálculo.</li>
-                    <li><span class="highlight">Enfoque analítico:</span> Capacidad para leer código, entender el comportamiento a bajo nivel e identificar fallos lógicos o de seguridad.</li>
-                    <li><span class="highlight">Metodología práctica:</span> Resolución constante de máquinas, documentación técnica detallada (Writeups) y desarrollo de herramientas propias para automatización.</li>
+                    <li><span class="highlight">Enumeración estructurada:</span> reconocimiento metódico, mapeo de superficie, identificación de tecnologías y búsqueda de supuestos débiles.</li>
+                    <li><span class="highlight">Explotación controlada:</span> antes de ejecutar un ataque, entiendo el payload, los efectos secundarios y qué hay que documentar despues.</li>
+                    <li><span class="highlight">Análisis de impacto:</span> no es solo "logré acceso", sino entender qué puede hacer un atacante en ese punto y por qué es crítico.</li>
+                    <li><span class="highlight">Documentación técnica:</span> writeups completos con metodología, herramientas, comandos exactos y explicación suficiente para que otro pueda replicar o defenderse.</li>
                 </ul>
             </article>
 
             <article class="card col-5 reveal">
-                <h2>Stack técnico por áreas</h2>
+                <h2>Stack ofensivo y programación</h2>
                 <p class="small" style="margin-bottom: 10px;">
-                    Capacidades agrupadas para lectura rápida del perfil técnico en entornos de seguridad ofensiva.
+                    Base sólida en programación de sistemas, herramientas de ataque y desarrollo de exploits.
                 </p>
                 <div class="stack-layout">
                     <div class="stack-block">
-                        <h3>Lenguajes</h3>
+                        <h3>Lenguajes de programación</h3>
                         <div class="chip-group">
                             <span class="chip">Python</span>
+                            <span class="chip">C / C++</span>
                             <span class="chip">Java</span>
-                            <span class="chip">C</span>
-                            <span class="chip">C++</span>
-                            <span class="chip">C# (aprendiendo)</span>
-                            <span class="chip">Bash (aprendiendo)</span>
-                        </div>
-                    </div>
-                    <div class="stack-block">
-                        <h3>Herramientas de seguridad ofensiva</h3>
-                        <div class="chip-group">
-                            <span class="chip">Burp Suite</span>
-                            <span class="chip">Wireshark / tcpdump</span>
-                            <span class="chip">ffuf</span>
-                            <span class="chip">Aircrack-ng</span>
-                            <span class="chip">John the Ripper</span>
-                            <span class="chip">Ghidra</span>
-                        </div>
-                    </div>
-                    <div class="stack-block">
-                        <h3>Sistemas y entorno</h3>
-                        <div class="chip-group">
-                            <span class="chip">Linux</span>
-                            <span class="chip">Arch Linux</span>
-                            <span class="chip">Raspberry Pi</span>
-                            <span class="chip">SSH</span>
-                        </div>
-                    </div>
-                    <div class="stack-block">
-                        <h3>Desarrollo y automatización</h3>
-                        <div class="chip-group">
-                            <span class="chip">FastAPI</span>
-                            <span class="chip">Jinja2</span>
+                            <span class="chip">Bash</span>
+                            <span class="chip">C#</span>
                             <span class="chip">JavaScript</span>
-                            <span class="chip">Git / GitHub</span>
-                            <span class="chip">Godot (aprendiendo)</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Pentesting web y redes</h3>
+                        <div class="chip-group">
+                            <span class="chip">Burp Suite Pro</span>
+                            <span class="chip">ffuf / wfuzz</span>
+                            <span class="chip">sqlmap</span>
+                            <span class="chip">Wireshark / tcpdump</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Análisis y reversing</h3>
+                        <div class="chip-group">
+                            <span class="chip">Ghidra</span>
+                            <span class="chip">strings / file / objdump</span>
+                            <span class="chip">ltrace / strace</span>
+                            <span class="chip">GDB / LLDB</span>
+                        </div>
+                    </div>
+                    <div class="stack-block">
+                        <h3>Explotación y ataque</h3>
+                        <div class="chip-group">
+                            <span class="chip">Pwntools</span>
+                            <span class="chip">Metasploit</span>
+                            <span class="chip">John the Ripper / Hashcat</span>
+                            <span class="chip">Aircrack-ng</span>
                         </div>
                     </div>
                 </div>
             </article>
 
-            <article id="curriculum" class="card col-7 reveal">
-                <h2>Currículum</h2>
-                <ul class="list">
-                    <li><span class="highlight">Email:</span> <a href="mailto:vaduva.albertogabriel@gmail.com" style="color:#bfdbfe; overflow-wrap:anywhere; word-break:break-word;">vaduva.albertogabriel@gmail.com</a></li>
-                    <li><span class="highlight">Teléfono:</span> <a href="tel:+34640342981" style="color:#bfdbfe;">+34 640 342 981</a></li>
-                    <li><span class="highlight">Formación:</span> estudiante de 3º de Ingeniería Informática en la Universidad Complutense de Madrid (UCM).</li>
-                    <li><span class="highlight">Inicio técnico:</span> comencé a programar en 2º/3º de la ESO con proyectos personales.</li>
-                    <li><span class="highlight">Especialización:</span> transición clara hacia ciberseguridad ofensiva y pentesting.</li>
-                    <li><span class="highlight">Formación específica:</span> curso de Hack4u para preparación activa de eJPTv2.</li>
-                    <li><span class="highlight">Trayectoria académica:</span> sin repetir cursos ni asignaturas hasta la fecha.</li>
-                    <li><span class="highlight">Matrículas de Honor:</span> reconocimientos en Bachillerato y asignaturas universitarias.</li>
-                    <li><span class="highlight">Disponibilidad:</span> abierto a prácticas y oportunidades de trabajo compatibles con el calendario académico.</li>
-                    <li><span class="highlight">Perfil profesional:</span> <a href="https://www.linkedin.com/in/alberto-gabriel-vaduva" target="_blank" rel="noopener" style="color:#bfdbfe;">linkedin.com/in/alberto-gabriel-vaduva</a></li>
-                    <li><span class="highlight">Perfil HTB:</span> <a href="https://app.hackthebox.com/users/1104864" target="_blank" rel="noopener" style="color:#bfdbfe;">app.hackthebox.com/users/1104864</a></li>
+            <article id="curriculum" class="card col-12 reveal">
+                <h2>Formación y trayectoria</h2>
+                <ul class="list compact">
+                    <li><span class="highlight">Carrera:</span> 3º de Ingeniería Informática en la UCM.</li>
+                    <li><span class="highlight">Trayectoria académica:</span> sin asignaturas repetidas desde ESO.</li>
+                    <li><span class="highlight">Excelencia:</span> Matrículas de Honor en Bachillerato y asignaturas core de la carrera.</li>
+                    <li><span class="highlight">Foco actual:</span> ciberseguridad ofensiva, pentesting y análisis técnico de vulnerabilidades.</li>
                 </ul>
             </article>
 
-            <article id="perfil-academico" class="card col-5 reveal">
+            <article class="card col-4 reveal">
                 <h2>Perfil académico y personal</h2>
                 <div class="timeline">
-                <div class="timeline-item">
-                        <strong>Excelencia y Constancia Académica</strong>
-                        <span class="small">Historial académico impecable sin asignaturas repetidas. Galardonado con Matrícula de Honor en Bachillerato y en disciplinas core de la Ingeniería Informática (Programación, Estructuras de Datos, Hardware).</span>
+                    <div class="timeline-item">
+                        <strong>Excelencia y constancia</strong>
+                        <span class="small">Trayectoria académica muy estable y reconocimientos en etapas distintas, tanto antes como durante la carrera.</span>
                     </div>
                     <div class="timeline-item">
-                        <strong>Certificaciones en progreso</strong>
-                        <span class="small">Actualmente cursando itinerarios formativos avanzados (Hack4u) con el objetivo de obtener la certificación eJPTv2 en verano de 2026.</span>
-                    </div>
-                    <div class="timeline-item">
-                        <strong>Trabajo colaborativo</strong>
-                        <span class="small">Buena adaptación a trabajo en equipo, especialmente en proyectos técnicos con aprendizaje compartido.</span>
-                    </div>
-                    <div class="timeline-item">
-                        <strong>CVE Research aplicado</strong>
-                        <span class="small">Estudio de CVEs activos y no activos para entender impacto real y, cuando es viable, reproducir pruebas de forma controlada.</span>
+                        <strong>Aprendizaje autónomo desde hace años</strong>
+                        <span class="small">Gran parte de mi recorrido técnico ha venido de montar proyectos propios, leer documentación y desmontar errores hasta entenderlos.</span>
                     </div>
                     <div class="timeline-item">
                         <strong>Idiomas</strong>
-                        <span class="small">Rumano y español nativos; inglés fluido con objetivo de certificar C1 en verano.</span>
+                        <span class="small">Español y rumano nativos. Inglés fluido orientado a documentación, laboratorios y comunicación técnica.</span>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Objetivo a corto plazo</strong>
+                        <span class="small">Entrar en un entorno donde seguir creciendo como perfil de desarrollo y seguridad con exposición a código y problemas reales.</span>
                     </div>
                 </div>
+            </article>
+
+            <article class="card col-4 reveal">
+                <h2>Lo que me mueve en seguridad</h2>
+                <ul class="list">
+                    <li><span class="highlight">Pensamiento sistemático:</span> ver cómo un fallo puntual en validación puede llevar a control total del sistema.</li>
+                    <li><span class="highlight">Comunicación de impacto:</span> saber explicar un finding técnico en términos que el equipo entienda y pueda actuar.</li>
+                    <li><span class="highlight">Ciclo completo:</span> de la enumeración a la explotación, análisis de raíz y remediación verificable.</li>
+                    <li><span class="highlight">Constancia y método:</span> pentesting no es adivinar, es seguir una metodología y documentarla.</li>
+                </ul>
+            </article>
+
+            <article class="card col-4 reveal">
+                <h2>Objetivo profesional</h2>
+                <p>
+                    Busco entrar en un equipo de seguridad ofensiva donde el valor viene de encontrar y explicar vulnerabilidades reales.
+                    Pentesting junior, análisis de red team, revisión de seguridad de productos. Un rol donde pueda aprender metodología profesional
+                    junto a perfiles más veteranos y siga ejercitando el laboratorio paralelo.
+                </p>
+                <div style="height: 14px;"></div>
+                <ul class="list">
+                    <li>Consolidar trayectoria hacia eJPTv2 y más allá en certificaciones ofensivas.</li>
+                    <li>Trabajar con Burp Suite, OWASP Top 10 y frameworks de pentesting en contexto profesional.</li>
+                    <li>Publicar writeups profundos y PoCs reproducibles de hallazgos de laboratorio.</li>
+                    <li>Crecer desde junior hacia perfil de pentester con capacidad de liderar auditorías pequeñas.</li>
+                </ul>
             </article>
 
             <article id="otros-proyectos" class="card col-12 reveal">
-                <h2>Otros proyectos</h2>
+                <h2>Laboratorio y proyectos de seguridad ofensiva</h2>
                 <p>
-                    Además del laboratorio de ciberseguridad, desarrollo proyectos técnicos que refuerzan automatización,
-                    análisis y pensamiento de seguridad aplicable a entornos reales.
+                    Mi home lab combina pentesting tradicional con desarrollo de herramientas y PoCs. Cada proyecto es una investigación real de un vector de ataque,
+                    construida desde cero para entender la cadena completa: reconocimiento, explotación, persistencia y lateralización.
                 </p>
                 <div class="project-grid">
                     <div class="project-card">
-                        <h3>Coche teledirigido controlado desde PC</h3>
-                        <p class="small">Proyecto de control remoto seguro desde ordenador usando SSH y lógica de mando personalizada.</p>
+                        <h3>USB Stealer & Persistencia (ESP32)</h3>
+                        <p class="small">Desarrollo de herramienta de ataque USB para captura de credenciales WiFi, datos locales e implante de persistencia.</p>
                         <ul>
-                            <li>Integración de control remoto en entorno doméstico/lab.</li>
-                            <li>Seguridad básica de acceso con túnel remoto.</li>
-                            <li>Enfoque en fiabilidad de ejecución y respuesta.</li>
+                            <li>Firmware en C/C++ para ESP32: captura de tráfico WiFi y ataques de diccionario en tiempo real.</li>
+                            <li>Extracción de credenciales guardadas del sistema (Windows, Linux).</li>
+                            <li>Implantación de reverse shell persistente para acceso post-compromiso y pivoting de red.</li>
+                            <li>Lab controlado: deployments en home lab para auditado y validación de defensas.</li>
                         </ul>
                     </div>
                     <div class="project-card">
-                        <h3>Launcher de aplicaciones para Windows</h3>
-                        <p class="small">Herramienta propia para productividad diaria y centralización de utilidades.</p>
+                        <h3>Laboratorios HTB y CTF</h3>
+                        <p class="small">Máquinas vulnerables de Hack The Box y competiciones CTF como laboratorio continuo.</p>
                         <ul>
-                            <li>Acceso rápido a herramientas y automatizaciones personales.</li>
-                            <li>Organización del entorno para reducir fricción operativa.</li>
-                            <li>Evolución incremental según uso real.</li>
+                            <li>Máquinas easy, medium, hard en Linux, Windows y especialidades (OSINT, crypto, web).</li>
+                            <li>Cadenas de explotación complejas: enumeración, escalada, pivoting, post-explotación.</li>
+                            <li>Documentación de metodología para cada categoría de vulnerabilidad.</li>
                         </ul>
                     </div>
                     <div class="project-card">
-                        <h3>Análisis de vulnerabilidad lógica y evasión de Firewall (Steam)</h3>
-                        <p class="small">Investigación técnica del flujo de validación de Steam Family y reproducción controlada de un bypass basado en reglas de red.</p>
+                        <h3>Análisis de CVEs y reversing binario</h3>
+                        <p class="small">Reproducción de vulnerabilidades reales en entorno controlado usando Ghidra, GDB y análisis estático.</p>
                         <ul>
-                            <li>Identificación del punto lógico de validación de estado de usuarios del grupo familiar.</li>
-                            <li>Diseño de prueba controlada para bloquear tráfico crítico y forzar uso simultáneo no previsto.</li>
-                            <li>Implementación de PoC en launcher para replicar el escenario con reglas de firewall reproducibles.</li>
-                            <li>Caso útil como entrenamiento en lógica de negocio, modelado de abuso y validación de mitigaciones.</li>
+                            <li>Estudio de CVEs activos: entender el fallo de raíz y construir exploit.</li>
+                            <li>Reversing de binarios: búsqueda de secrets, bypass de protecciones, análisis de mitigaciones.</li>
+                            <li>Pruebas de concepto (PoC) reproducibles y documentadas.</li>
                         </ul>
                     </div>
                     <div class="project-card">
-                        <h3>Juego en desarrollo (C# + Godot)</h3>
-                        <p class="small">Proyecto colaborativo en GitHub para reforzar arquitectura, gameplay y C# aplicado.</p>
+                        <h3>Análisis de vulnerabilidad lógica en Steam Family</h3>
+                        <p class="small">Investigación y PoC de un bypass en validación de estado y reglas de red.</p>
                         <ul>
-                            <li>Aprendizaje práctico de motor Godot y scripting en C#.</li>
-                            <li>Trabajo colaborativo y reparto de tareas.</li>
-                            <li>Versionado y seguimiento técnico desde repositorio.</li>
+                            <li>Reverse engineering de lógica de negocio desde análisis de tráfico.</li>
+                            <li>Modelado de escenarios de abuso basados en comportamiento esperado.</li>
+                            <li>Validación reproducible de impacto en home lab.</li>
                         </ul>
                     </div>
                     <div class="project-card">
-                        <h3>Raspberry Smart Drive y laboratorio de seguridad</h3>
-                        <p class="small">Plataforma base para experimentar con backend, UI y prácticas de seguridad ofensiva/defensiva.</p>
+                        <h3>Herramientas custom en C++ y Python</h3>
+                        <p class="small">Desarrollo de utilidades específicas para casos que las herramientas existentes no cubren bien.</p>
                         <ul>
-                            <li>Evolución iterativa con foco en utilidad real.</li>
-                            <li>Desarrollo enfocado a seguridad y realización de auditorías constantes.</li>
-                            <li>Uso continuo como entorno de aprendizaje.</li>
-                            <li>Usado como laboratorio de pruebas de seguridad.</li>
+                            <li>Automatización de fases de reconocimiento y explotación.</li>
+                            <li>Post-explotación: movimiento lateral, escalada, evasión de defensa.</li>
+                            <li>Análisis de red: sniffing, inyección de paquetes, fuerza bruta especializada.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <h3>Godot + C# para gaming (aprendizaje transversal)</h3>
+                        <p class="small">Proyecto colaborativo que refuerza arquitectura de software, manejo de estado complejo y depuración.</p>
+                        <ul>
+                            <li>Aplicación de patrones de desarrollo que trasporto a herramientas de pentesting.</li>
+                            <li>Manejo eficiente de memoria y performance en entornos constrained (útil para embedded attacks).</li>
+                            <li>Trabajo colaborativo y versionado profesional.</li>
                         </ul>
                     </div>
                 </div>
             </article>
 
-            <article class="card col-7 reveal">
-                <h2>Fortalezas</h2>
-                <ul class="list">
-                    <li><span class="highlight">Pensamiento ofensivo estructurado:</span> enfoque metódico para enumeración, explotación controlada y documentación.</li>
-                    <li><span class="highlight">Aprendizaje autónomo:</span> incorporación rápida de herramientas y frameworks nuevos.</li>
-                    <li><span class="highlight">Comunicación técnica:</span> traducción de hallazgos técnicos a impacto, riesgo y acciones concretas.</li>
-                    <li><span class="highlight">Constancia:</span> progreso académico y técnico sostenido a largo plazo.</li>
-                </ul>
-            </article>
-
-            <article class="card col-5 reveal">
-                <h2>Objetivo profesional</h2>
-                <p>
-                    Seguir especializándome en seguridad ofensiva, completar certificaciones relevantes y entrar en un entorno
-                    donde pueda aportar en pentesting junior, análisis técnico ofensivo y desarrollo de tooling como soporte operativo.
-                </p>
-                <div style="height: 12px;"></div>
-                <ul class="list">
-                    <li>Certificar nivel C1 de inglés en verano.</li>
-                    <li>Consolidar trayectoria en pentesting y red team junior.</li>
-                    <li>Publicar writeups técnicos de mayor profundidad y PoCs controladas.</li>
-                    <li>Combinar prácticas o trabajo junior con estudios en curso.</li>
-                </ul>
-            </article>
-
             <article id="writeups" class="card col-12 reveal">
-                <h2>Writeups de ciberseguridad</h2>
+                <h2>Writeups de seguridad ofensiva</h2>
+                <p>
+                    Aquí documento la metodología completa: enumeración, explotación, impacto y remediación. La idea es que cada writeup sea útil y replicable,
+                    no solo una lista rápida de pasos.
+                </p>
                 <div style="height: 14px;"></div>
                 <div class="writeups-toolbar">
                     <input id="writeup-search" class="search-input" type="text" placeholder="Buscar máquina, plataforma, dificultad o tag..." autocomplete="off">
@@ -818,42 +992,120 @@
                 </div>
             </article>
 
-            <article id="proyecto" class="card col-7 reveal">
-                <h2>Proyecto destacado: Raspberry Pi Smart Drive</h2>
+            <article class="card col-12 reveal" id="proyecto">
+                <h2>Proyecto principal: laboratorio de seguridad en Raspberry Pi</h2>
                 <p>
-                    Plataforma de almacenamiento personal que también uso como entorno de laboratorio para auditarme,
-                    practicar pruebas de seguridad y mejorar tanto la parte ofensiva como la robustez del backend.
+                    Smart Drive es una plataforma de archivos que despliego en Raspberry Pi y uso como <span class="highlight">laboratorio vivo de seguridad</span>.
+                    No es ficticio ni desechable: lo uso realmente, soporta carga variable, se expone a Internet y me obliga a detectar, validar y corregir fallos en iteraciones cortas.
                 </p>
                 <div style="height: 14px;"></div>
-                <ul class="list">
-                    <li><span class="ok">✔</span> Desarrollo completo de backend y frontend orientado a uso real.</li>
-                    <li><span class="ok">✔</span> Base para pruebas de seguridad en entorno controlado.</li>
-                    <li><span class="ok">✔</span> Funcionalidades de gestión de archivos y búsqueda para escenarios de laboratorio.</li>
-                    <li><span class="ok">✔</span> Despliegue en Raspberry Pi con ejecución persistente y mantenimiento.</li>
-                </ul>
-            </article>
-
-            <article class="card col-5 reveal">
-                <h2>Evolución del proyecto</h2>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <strong>Fase 1 · Plataforma funcional</strong>
-                        <span class="small">Subida de archivos, inbox y estructura de catálogo.</span>
+                <div class="quote">
+                    En marzo de 2026 el proyecto pasó a una fase mucho más madura: panel de control propio, auditoría pasiva,
+                    despliegue seguro separado de desarrollo, arquitectura en capas y correcciones de seguridad aplicadas sobre código real.
+                </div>
+                <div class="project-grid">
+                    <div class="project-card">
+                        <h3>Panel de observabilidad y accesos</h3>
+                        <p class="small">Monitorización de visitantes y acciones dentro del propio sistema.</p>
+                        <ul>
+                            <li>Detección pasiva: cookie técnica, IP, user-agent e idioma.</li>
+                            <li>Registro de acciones sensibles: subidas, borrados, descargas y movimientos.</li>
+                            <li>Bloqueo/desbloqueo de usuarios, marcado admin, filtrado y búsqueda.</li>
+                        </ul>
                     </div>
-                    <div class="timeline-item">
-                        <strong>Fase 2 · Productividad operativa</strong>
-                        <span class="small">Drag & drop, acciones rápidas y búsqueda por nombre/contenido.</span>
+                    <div class="project-card">
+                        <h3>Telemetría de actividad real</h3>
+                        <p class="small">El panel permitió detectar patrones sospechosos en producción y responder rápido.</p>
+                        <ul>
+                            <li>5-6 POST sospechosas desde IPs de Francia con patrón de enumeración.</li>
+                            <li>Cloudflare WAF bloqueó más de 2000 solicitudes del mismo patrón.</li>
+                            <li>Refuerzo de reglas y alertas para futuras iteraciones.</li>
+                        </ul>
                     </div>
-                    <div class="timeline-item">
-                        <strong>Fase 3 · Laboratorio de seguridad</strong>
-                        <span class="small">Uso del proyecto como base para autoauditoría y mejora de metodología ofensiva.</span>
+                    <div class="project-card">
+                        <h3>Despliegue seguro</h3>
+                        <p class="small">Separación explícita entre desarrollo y web pública para evitar cambios accidentales.</p>
+                        <ul>
+                            <li>Instancia pública aislada del directorio de trabajo.</li>
+                            <li>Publicación explícita vía <span class="highlight">deploy_main_to_public.sh</span>.</li>
+                            <li>Puerto 8000 reservado para main; desarrollo en 8001.</li>
+                        </ul>
                     </div>
-                    <div class="timeline-item">
-                        <strong>Próximo paso</strong>
-                        <span class="small">Más máquinas, más writeups y pruebas técnicas documentadas.</span>
+                    <div class="project-card">
+                        <h3>Hardening técnico</h3>
+                        <p class="small">Endurecimiento continuo sobre vectores típicos de servicios de archivos.</p>
+                        <ul>
+                            <li>Path traversal: normalización y validación estricta de rutas.</li>
+                            <li>CSRF: protección en endpoints mutables y validación same-origin.</li>
+                            <li>Subidas por chunks: control estricto de offsets y estado.</li>
+                        </ul>
                     </div>
                 </div>
             </article>
+            <article class="card col-12 reveal">
+                <h2>Fallos de seguridad conocidos y parcheados</h2>
+                <div class="project-grid">
+                    <div class="project-card">
+                        <div class="status-row">
+                            <span class="status-pill status-fixed">Parcheado</span>
+                        </div>
+                        <h3>CSRF en endpoints mutables</h3>
+                        <p class="small">Riesgo clásico en acciones sensibles del panel y de la interfaz.</p>
+                        <ul>
+                            <li>Se añadió token CSRF dedicado y validación same-origin para métodos <span class="highlight">POST/PUT/PATCH/DELETE</span>.</li>
+                            <li>El objetivo fue evitar ejecuciones cruzadas no intencionadas desde otro origen.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <div class="status-row">
+                            <span class="status-pill status-fixed">Parcheado</span>
+                        </div>
+                        <h3>Subidas por chunks con offset inconsistente</h3>
+                        <p class="small">Sin validación estricta, la reanudación de subidas podía quedar desincronizada.</p>
+                        <ul>
+                            <li>Ahora se compara el <span class="highlight">chunk_offset</span> esperado con el tamaño real del parcial.</li>
+                            <li>Si no coinciden, la subida falla con conflicto controlado en vez de aceptar estado ambiguo.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <div class="status-row">
+                            <span class="status-pill status-fixed">Parcheado</span>
+                        </div>
+                        <h3>Lectura fuera de base / traversal</h3>
+                        <p class="small">Riesgo típico en servicios que manipulan rutas del sistema de archivos.</p>
+                        <ul>
+                            <li>Se normalizan rutas con <span class="highlight">realpath</span> y se verifica que sigan dentro de las bases permitidas.</li>
+                            <li>La búsqueda de contenido además ignora symlinks y vuelve a validar cada ruta antes de procesarla.</li>
+                        </ul>
+                    </div>
+                    <div class="project-card">
+                        <div class="status-row">
+                            <span class="status-pill status-fixed">Parcheado</span>
+                        </div>
+                        <h3>Limpieza agresiva del registro de accesos</h3>
+                        <p class="small">Al limpiar visitantes detectados había riesgo de afectar al owner o perder contexto operativo útil.</p>
+                        <ul>
+                            <li>Se preserva la sesión administrativa actual y se protegen IPs de owner configuradas.</li>
+                            <li>También se ajustó el panel para resaltar la propia sesión y limpiar contadores de forma coherente.</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card col-12 reveal">
+                <h2>Límites actuales conocidos</h2>
+                <div style="height: 14px;"></div>
+                <div class="status-row">
+                    <span class="status-pill status-known">Abierto</span>
+                </div>
+                <ul class="list">
+                    <li><span class="highlight">Sin autenticación/autorización nativa para usuarios finales:</span> la seguridad de acceso depende de la capa externa de publicación.</li>
+                    <li><span class="highlight">Sin antimalware ni DLP en subidas:</span> no hay inspección avanzada del contenido subido.</li>
+                    <li><span class="highlight">Sin defensa específica frente a ZIP bombs:</span> sigue siendo una línea futura de trabajo para cargas y extracción de documentos.</li>
+                    <li><span class="highlight">Auditoría práctica, no de nivel SOC:</span> hay trazabilidad útil para operar el proyecto, pero no una solución completa de observabilidad empresarial.</li>
+                </ul>
+            </article>
+
         </section>
     </main>
 

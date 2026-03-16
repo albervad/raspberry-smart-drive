@@ -1,5 +1,23 @@
 [
   {
+    "id": "smartdrive-bot-enumeration-france",
+    "machine": "Raspberry Smart Drive · Tráfico automatizado bloqueado",
+    "platform": "Proyecto propio (producción)",
+    "difficulty": "Incidente real",
+    "date": "2026-03-16",
+    "tags": ["incident-response", "cloudflare-waf", "directory-enumeration", "hardening", "bot-detection", "honeypot"],
+    "summary": "Se detectaron 5-6 peticiones POST sospechosas en el panel de control desde IPs de Francia (misma localidad), mientras Cloudflare WAF bloqueó más de 2000 solicitudes automatizadas relacionadas.",
+    "steps": [
+      "Detección inicial de actividad anómala en el panel de control de accesos.",
+      "Correlación de IPs y geolocalización: origen concentrado en Francia y misma localidad.",
+      "Revisión de patrón de tráfico: comportamiento compatible con enumeración de directorios sensibles.",
+      "Validación de contención en perímetro: Cloudflare bloqueó más de 2000 solicitudes automatizadas.",
+      "Refuerzo de reglas defensivas para bloquear tráfico de herramientas automatizadas y patrones repetitivos.",
+      "Plan de mejora: añadir alertas avanzadas de Cloudflare y desplegar honeypot controlado para análisis de futuras campañas."
+    ],
+    "mitigation": "Mantener WAF con reglas endurecidas, alertado activo y monitorización continua desde panel; complementar con honeypot controlado para obtener telemetría y ajustar defensas sin exponer servicios críticos."
+  },
+  {
     "id": "htb-facts",
     "machine": "Facts",
     "platform": "Hack The Box",

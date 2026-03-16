@@ -207,6 +207,14 @@ Variables útiles:
 - `SMARTDRIVE_AUDIT_MAX_EVENTS`: máximo de eventos de auditoría persistidos.
 - `SMARTDRIVE_AUDIT_RECENT_LIMIT`: cuántos eventos recientes mostrar en el panel.
 - `SMARTDRIVE_NEW_VISITOR_WINDOW_HOURS`: ventana para marcar usuarios como "nuevos".
+- `SMARTDRIVE_WEBPUSH_PUBLIC_KEY`: clave pública VAPID para notificaciones push web.
+- `SMARTDRIVE_WEBPUSH_PRIVATE_KEY`: clave privada VAPID para notificaciones push web.
+- `SMARTDRIVE_WEBPUSH_SUBJECT`: identificador de contacto VAPID (por ejemplo `mailto:tu-email@dominio.com`).
+- `SMARTDRIVE_PUSH_DEFAULT_NOTIFY_UNKNOWN_VISITORS`: regla por defecto para alertar nuevos visitantes no admin (`1`/`0`).
+- `SMARTDRIVE_PUSH_DEFAULT_NOTIFY_RECURRENT_REQUESTS`: regla por defecto para alertar ráfagas de peticiones (`1`/`0`).
+- `SMARTDRIVE_PUSH_DEFAULT_RECURRENT_THRESHOLD`: umbral inicial de peticiones para alertas recurrentes.
+- `SMARTDRIVE_PUSH_DEFAULT_RECURRENT_WINDOW_SECONDS`: ventana inicial en segundos para contar peticiones recurrentes.
+- `SMARTDRIVE_PUSH_DEFAULT_RECURRENT_COOLDOWN_SECONDS`: tiempo mínimo entre alertas recurrentes del mismo visitante.
 
 Acceso local:
 
@@ -228,6 +236,26 @@ En desarrollo puedes aislar datos con `SMARTDRIVE_BASE_MOUNT` (por ejemplo `/tmp
 - Permite borrar registros globales o por usuario una vez revisados.
 - Estadísticas de portfolio excluyen automáticamente a usuarios marcados como admin.
 - Endpoints mutables (`POST`/`PUT`/`PATCH`/`DELETE`) aplican protección CSRF (token y validación same-origin).
+
+### 🔔 Notificaciones push de accesos
+
+- Configuración desde `/control` (sin app móvil nativa): botón de suscripción del navegador + reglas de alerta.
+- El Service Worker de notificaciones se sirve en ruta protegida de admin (`/control/sw.js`), no desde `/static`.
+- Casos de alerta soportados:
+   - Nuevo visitante no admin.
+   - Peticiones muy recurrentes del mismo visitante en una ventana temporal.
+- La suscripción de dispositivos se guarda en `SMARTDRIVE_AUDIT_DIR/push_subscriptions.json`.
+- Las reglas activas se guardan en `SMARTDRIVE_AUDIT_DIR/push_rules.json` y se pueden ajustar desde el panel.
+- Requisito: configurar claves VAPID (`SMARTDRIVE_WEBPUSH_PUBLIC_KEY`, `SMARTDRIVE_WEBPUSH_PRIVATE_KEY`, `SMARTDRIVE_WEBPUSH_SUBJECT`) e instalar dependencias de `requirements.txt`.
+
+Generar claves VAPID sin Node.js:
+
+```bash
+source venv/bin/activate
+python generate_vapid_keys.py
+```
+
+El script devuelve JSON con `publicKey` y `privateKey` para exportarlas como variables de entorno.
 
 ## 🛣️ Roadmap de seguridad (portfolio)
 
