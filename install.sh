@@ -27,6 +27,20 @@ CURRENT_DIR=$(pwd)
 echo -e "${GREEN}>>> Iniciando instalación para el usuario: ${CYAN}$REAL_USER${NC}"
 echo -e "${GREEN}>>> Directorio de instalación: ${CYAN}$CURRENT_DIR${NC}"
 
+# Detectar si estamos en una Raspberry Pi
+IS_RASPBERRY_PI=0
+if grep -qi "raspberry pi" /proc/device-tree/model 2>/dev/null; then
+    IS_RASPBERRY_PI=1
+elif grep -qi "raspberry pi" /proc/cpuinfo 2>/dev/null; then
+    IS_RASPBERRY_PI=1
+fi
+
+if [[ "$IS_RASPBERRY_PI" == "1" ]]; then
+    echo -e "${GREEN}>>> Plataforma detectada: ${CYAN}Raspberry Pi${NC}"
+else
+    echo -e "${GREEN}>>> Plataforma detectada: ${CYAN}Linux genérico (no Raspberry Pi)${NC}"
+fi
+
 # ---------------------------------------------------------
 # 1. ACTUALIZACIÓN Y DEPENDENCIAS
 # ---------------------------------------------------------
@@ -34,15 +48,18 @@ echo -e "${YELLOW}[1/5] Actualizando sistema e instalando paquetes necesarios...
 apt update
 # git: control de versiones
 # python3-venv: entornos virtuales
-# dphys-swapfile: gestor de swap fácil
-# htopy/iotop (opcionales pero recomendados para monitorizar): los añado como extra
-apt install -y python3-pip python3-venv git dphys-swapfile
+# dphys-swapfile: gestor de swap (solo Raspberry Pi)
+if [[ "$IS_RASPBERRY_PI" == "1" ]]; then
+    apt install -y python3-pip python3-venv git dphys-swapfile
+else
+    apt install -y python3-pip python3-venv git
+fi
 
 # ---------------------------------------------------------
 # 2. CONFIGURACIÓN INTERACTIVA DE SWAP
 # ---------------------------------------------------------
 echo -e "${YELLOW}[2/5] Configuración de Memoria Virtual (SWAP)${NC}"
-echo "La Raspberry Pi necesita SWAP extra para procesar subidas de archivos grandes."
+echo "Se recomienda SWAP extra para procesar subidas de archivos grandes."
 echo -e "Recomendado: ${CYAN}2048${NC} (2GB) para uso normal."
 
 read -p "Introduce el tamaño de SWAP en MB (Enter para usar 2048): " SWAP_INPUT
@@ -59,15 +76,40 @@ else
     echo -e ">> Configurando SWAP a: ${CYAN}$SWAP_SIZE MB${NC}"
 fi
 
-# Aplicar configuración de SWAP
-dphys-swapfile swapoff
-if grep -q "^CONF_SWAPSIZE=" /etc/dphys-swapfile; then
-    sed -i "s/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$SWAP_SIZE/" /etc/dphys-swapfile
+if [[ "$IS_RASPBERRY_PI" == "1" ]]; then
+    # --- Raspberry Pi: usar dphys-swapfile ---
+    dphys-swapfile swapoff
+    if grep -q "^CONF_SWAPSIZE=" /etc/dphys-swapfile; then
+        sed -i "s/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$SWAP_SIZE/" /etc/dphys-swapfile
+    else
+        echo "CONF_SWAPSIZE=$SWAP_SIZE" >> /etc/dphys-swapfile
+    fi
+    dphys-swapfile setup
+    dphys-swapfile swapon
 else
-    echo "CONF_SWAPSIZE=$SWAP_SIZE" >> /etc/dphys-swapfile
+    # --- Linux genérico (Ubuntu, Debian, etc.): usar swapfile estándar ---
+    SWAPFILE="/swapfile"
+    SWAP_BYTES=$(( SWAP_SIZE * 1024 * 1024 ))
+    if swapon --show | grep -q "$SWAPFILE"; then
+        echo -e ">> Swapfile ${CYAN}$SWAPFILE${NC} ya está activo. Se omite la creación."
+    else
+        if [[ -f "$SWAPFILE" ]]; then
+            echo -e ">> Swapfile ${CYAN}$SWAPFILE${NC} ya existe. Actualizando tamaño..."
+            swapoff "$SWAPFILE" 2>/dev/null || true
+            rm -f "$SWAPFILE"
+        fi
+        echo ">> Creando swapfile de ${SWAP_SIZE} MB en $SWAPFILE..."
+        fallocate -l "$SWAP_BYTES" "$SWAPFILE"
+        chmod 600 "$SWAPFILE"
+        mkswap "$SWAPFILE"
+        swapon "$SWAPFILE"
+        # Añadir a /etc/fstab si no está ya
+        if ! grep -q "^$SWAPFILE " /etc/fstab; then
+            echo "$SWAPFILE none swap sw 0 0" >> /etc/fstab
+            echo ">> Entrada añadida a /etc/fstab para persistencia."
+        fi
+    fi
 fi
-dphys-swapfile setup
-dphys-swapfile swapon
 
 # ---------------------------------------------------------
 # 3. CREACIÓN DE CARPETAS Y PERMISOS
