@@ -164,6 +164,57 @@ install_intel_gpu_tools() {
     fi
 }
 
+configure_intel_gpu_runtime_access() {
+    if ! has_intel_gpu; then
+        return
+    fi
+
+    if ! command -v intel_gpu_top >/dev/null 2>&1; then
+        echo -e "${YELLOW}>>> intel_gpu_top no disponible. Se omite configuracion avanzada de telemetria Intel GPU.${NC}"
+        return
+    fi
+
+    if ! command -v sudo >/dev/null 2>&1 || ! command -v visudo >/dev/null 2>&1; then
+        echo -e "${YELLOW}>>> sudo/visudo no disponible. Se omite regla NOPASSWD para intel_gpu_top.${NC}"
+        return
+    fi
+
+    for group_name in video render; do
+        if getent group "$group_name" >/dev/null 2>&1; then
+            if usermod -aG "$group_name" "$REAL_USER"; then
+                echo -e "${GREEN}>>> Usuario ${CYAN}$REAL_USER${GREEN} agregado a grupo ${CYAN}$group_name${GREEN}.${NC}"
+            fi
+        fi
+    done
+
+    INTEL_GPU_TOP_BIN="$(command -v intel_gpu_top)"
+    SUDOERS_FILE="/etc/sudoers.d/smartdrive-intel-gpu-top"
+
+    cat > "$SUDOERS_FILE" <<EOF
+# Smart Drive: permite telemetria Intel GPU sin password para el usuario del servicio
+Defaults:${REAL_USER} !requiretty
+${REAL_USER} ALL=(root) NOPASSWD: ${INTEL_GPU_TOP_BIN}
+EOF
+    chmod 440 "$SUDOERS_FILE"
+
+    if visudo -cf "$SUDOERS_FILE" >/dev/null 2>&1; then
+        echo -e "${GREEN}>>> Regla sudoers instalada para intel_gpu_top: ${CYAN}$SUDOERS_FILE${NC}"
+    else
+        echo -e "${RED}>>> Error validando sudoers para intel_gpu_top. Eliminando archivo por seguridad.${NC}"
+        rm -f "$SUDOERS_FILE"
+        return
+    fi
+
+    GPU_TEST_OUT="/tmp/smartdrive_intel_gpu_top_test.out"
+    su - "$REAL_USER" -c "timeout 2s sudo -n ${INTEL_GPU_TOP_BIN} -J -s 120 > ${GPU_TEST_OUT} 2>/dev/null || true"
+
+    if grep -q '"engines"' "$GPU_TEST_OUT" 2>/dev/null; then
+        echo -e "${GREEN}>>> Telemetria Intel GPU verificada correctamente para ${CYAN}$REAL_USER${GREEN}.${NC}"
+    else
+        echo -e "${YELLOW}>>> No se pudo verificar salida JSON de intel_gpu_top en modo no interactivo. El backend aplicara fallback de ejecucion.${NC}"
+    fi
+}
+
 ensure_cron_service() {
     if ! command -v systemctl >/dev/null 2>&1; then
         echo -e "${YELLOW}>>> systemctl no disponible. Revisa manualmente el servicio de cron en tu sistema.${NC}"
@@ -187,6 +238,7 @@ ensure_cron_service() {
 echo -e "${YELLOW}[1/6] Actualizando sistema e instalando paquetes necesarios...${NC}"
 install_dependencies
 install_intel_gpu_tools
+configure_intel_gpu_runtime_access
 
 # ---------------------------------------------------------
 # 2. CONFIGURACIÓN INTERACTIVA DE SWAP

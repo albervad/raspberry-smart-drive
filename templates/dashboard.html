@@ -356,9 +356,8 @@
         <section class="panel" aria-labelledby="services-title">
             <h2 id="services-title" class="section-title">Aplicaciones multimedia</h2>
             <div class="grid" id="services-grid">
-                <a class="service-link" data-port="5055" href="http://192.168.1.47:5055" target="_blank" rel="noopener">
-                    <strong>Jellyseerr</strong>
-                    <span>Puerto 5055</span>
+                <a class="service-link" data-port="" data-fixed-url="https://seerr.bertolt.dev" href="https://seerr.bertolt.dev" target="_blank" rel="noopener">
+                    <strong>Seerr</strong>
                 </a>
                 <a class="service-link" data-port="8096" href="http://192.168.1.47:8096" target="_blank" rel="noopener">
                     <strong>Jellyfin</strong>
@@ -487,8 +486,16 @@
             currentHostElement.textContent = selectedHost;
 
             serviceLinks.forEach((link) => {
-                const port = link.dataset.port;
-                link.href = 'http://' + selectedHost + ':' + port;
+                const fixedUrl = (link.dataset.fixedUrl || '').trim();
+                if (fixedUrl) {
+                    link.href = fixedUrl;
+                    return;
+                }
+
+                const port = (link.dataset.port || '').trim();
+                link.href = port
+                    ? 'http://' + selectedHost + ':' + port
+                    : 'http://' + selectedHost;
             });
         }
 

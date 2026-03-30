@@ -213,32 +213,41 @@ def _intel_gpu_usage_from_intel_gpu_top() -> list[dict]:
 
 
 def _intel_gpu_busy_percent_from_intel_gpu_top() -> float | None:
-    if shutil.which("intel_gpu_top") is None:
+    intel_gpu_top_path = shutil.which("intel_gpu_top")
+    if intel_gpu_top_path is None:
         return None
 
-    command = ["intel_gpu_top", "-J", "-s", "120"]
-    raw_output = ""
-    try:
-        completed = subprocess.run(
-            command,
-            text=True,
-            capture_output=True,
-            stderr=subprocess.DEVNULL,
-            timeout=0.8,
-            check=False,
-        )
-        raw_output = completed.stdout or ""
-    except subprocess.TimeoutExpired as exc:
-        raw_output = exc.stdout or ""
+    candidate_commands = [[intel_gpu_top_path, "-J", "-s", "120"]]
+    if shutil.which("sudo") is not None:
+        candidate_commands.append(["sudo", "-n", intel_gpu_top_path, "-J", "-s", "120"])
 
-    if not raw_output:
-        return None
+    for command in candidate_commands:
+        raw_output = ""
+        try:
+            completed = subprocess.run(
+                command,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                timeout=1.0,
+                check=False,
+            )
+            raw_output = completed.stdout or ""
+        except subprocess.TimeoutExpired as exc:
+            timed_out_output = exc.stdout
+            if isinstance(timed_out_output, bytes):
+                raw_output = timed_out_output.decode("utf-8", errors="ignore")
+            else:
+                raw_output = timed_out_output or ""
 
-    samples = _extract_json_dicts(raw_output)
-    for sample in reversed(samples):
-        busy = _intel_gpu_busy_from_intel_gpu_top_sample(sample)
-        if busy is not None:
-            return busy
+        if not raw_output:
+            continue
+
+        samples = _extract_json_dicts(raw_output)
+        for sample in reversed(samples):
+            busy = _intel_gpu_busy_from_intel_gpu_top_sample(sample)
+            if busy is not None:
+                return busy
 
     return None
 
